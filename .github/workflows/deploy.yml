@@ -29,8 +29,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Add .nojekyll for GitHub Pages
-        run: touch out/.nojekyll
+      - name: Disable Jekyll
+        run: touch ./out/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
