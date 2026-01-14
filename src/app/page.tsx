@@ -1,7 +1,7 @@
 "use client";
 
 import { FeaturesGrid } from "@/components/features-grid";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
 import { Navbar } from "@/components/navbar";
@@ -82,7 +82,11 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
       <HomeContent />
     </Suspense>
   );

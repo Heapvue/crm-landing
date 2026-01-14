@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, ArrowRight } from "lucide-react";
+import { X, CheckCircle, ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 interface BookingModalProps {
@@ -174,8 +174,17 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                                             disabled={isSubmitting}
                                             className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:shadow-[0_0_20px_-5px_var(--primary)] transition-all flex items-center justify-center gap-2 group mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {isSubmitting ? "Booking..." : "Book Time Slot"}
-                                            {!isSubmitting && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                                            {isSubmitting ? (
+                                                <>
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    <span>Booking...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Book Time Slot
+                                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                                </>
+                                            )}
                                         </button>
 
                                         <p className="text-center text-xs text-muted-foreground/60 pt-4">
