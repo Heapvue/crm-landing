@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   output: "export",
-  basePath: '/crm-landing',
+  basePath: '',
+  assetPrefix: '',
   images: {
     unoptimized: true,
   },

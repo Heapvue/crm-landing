@@ -29,8 +29,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Disable Jekyll
-        run: touch ./out/.nojekyll
+      - name: Add CNAME file
+        run: echo "heapsync.heapvue.com" > ./out/CNAME
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
