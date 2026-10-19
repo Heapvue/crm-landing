@@ -23,7 +23,7 @@ export default function DisclaimerPage() {
                     <p className="mb-4">Last updated: January 14, 2026</p>
 
                     <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">No Warranties</h2>
-                    <p>Heapsync is provided "as is," with all faults, and Heapvue expresses no representations or warranties, of any kind related to this website or the materials contained on this website.</p>
+                    <p>Heapsync is provided &quot;as is,&quot; with all faults, and Heapvue expresses no representations or warranties, of any kind related to this website or the materials contained on this website.</p>
 
                     <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Professional Advice</h2>
                     <p>Content on this website is not intended to constitute professional advice of any kind.</p>

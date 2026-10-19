@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Heapsync ad tracking
+
+Pixel **1142810485096006** tracks the landing-page and demo-form funnel. See [the event and audience guide](docs/meta-events.md) for the event definitions, retargeting recipes, local tests and post-deployment checks. A valid Book Time Slot submit fires Lead as a proxy (Google Forms responses are unverifiable); Schedule is not fired.
+
 ## Getting Started
 
 First, run the development server:

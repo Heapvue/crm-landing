@@ -8,35 +8,44 @@ import { Navbar } from "@/components/navbar";
 import { PricingComparison } from "@/components/pricing-comparison";
 import { Testimonials } from "@/components/testimonials";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { BookingModal } from "@/components/booking-modal";
+import type { DemoSource } from "@/lib/meta-events";
 
 function HomeContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [demoSource, setDemoSource] = useState<DemoSource>("navbar");
   const searchParams = useSearchParams();
-  const router = useRouter();
+
+  const openDemo = (source: DemoSource) => {
+    setDemoSource(source);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     const section = searchParams.get("section");
     if (section) {
       const element = document.getElementById(section);
       if (element) {
-        setTimeout(() => {
+        const timeout = setTimeout(() => {
           element.scrollIntoView({ behavior: "smooth" });
           // Clean URL without refresh
-          window.history.replaceState(null, "", "/");
+          const url = new URL(window.location.href);
+          url.searchParams.delete("section");
+          window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
         }, 100);
+        return () => clearTimeout(timeout);
       }
     }
   }, [searchParams]);
 
   return (
     <main className="min-h-screen bg-background text-foreground selection:bg-primary/30 font-sans">
-      <Navbar onOpenModal={() => setIsModalOpen(true)} />
-      <Hero onOpenModal={() => setIsModalOpen(true)} />
+      <Navbar onOpenModal={() => openDemo("navbar")} />
+      <Hero onOpenModal={openDemo} />
       <FeaturesGrid />
       <Testimonials />
-      <PricingComparison />
+      <PricingComparison onOpenModal={() => openDemo("pricing_lifetime_access")} />
 
       {/* CTA Section */}
       <section className="py-32 relative overflow-hidden bg-background">
@@ -57,7 +66,7 @@ function HomeContent() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => openDemo("footer_get_started")}
               className="relative px-8 py-4 bg-foreground text-background font-bold rounded-full shadow-lg hover:shadow-primary/25 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 group text-lg overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:animate-[shimmer_1.5s_infinite]" />
@@ -65,7 +74,7 @@ function HomeContent() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => openDemo("footer_contact_sales")}
               className="px-8 py-4 bg-secondary/50 backdrop-blur-sm text-foreground rounded-full hover:bg-secondary transition-all font-bold border border-foreground/10 flex items-center gap-2 hover:-translate-y-1 duration-200"
             >
               Contact Sales
@@ -75,7 +84,7 @@ function HomeContent() {
       </section>
 
       <Footer />
-      <BookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <BookingModal isOpen={isModalOpen} source={demoSource} onClose={() => setIsModalOpen(false)} />
     </main>
   );
 }

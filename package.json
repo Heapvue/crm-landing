@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:tracking": "node --test tests/meta-events.test.cjs",
+    "test:tracking:browser": "node tests/meta-events.browser.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

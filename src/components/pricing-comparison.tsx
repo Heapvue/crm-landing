@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Check, X, ArrowRight, Sparkles } from "lucide-react";
 
-export function PricingComparison() {
+export function PricingComparison({ onOpenModal }: { onOpenModal: () => void }) {
     return (
         <section id="pricing" className="py-32 relative overflow-hidden bg-background">
             {/* Dynamic Backgrounds */}
@@ -98,7 +98,7 @@ export function PricingComparison() {
                             ))}
                         </ul>
 
-                        <button className="w-full py-5 bg-foreground text-background font-bold rounded-2xl shadow-lg hover:opacity-90 hover:-translate-y-1 transition-all duration-200 relative z-10 text-center flex items-center justify-center gap-2 group/btn">
+                        <button onClick={onOpenModal} className="w-full py-5 bg-foreground text-background font-bold rounded-2xl shadow-lg hover:opacity-90 hover:-translate-y-1 transition-all duration-200 relative z-10 text-center flex items-center justify-center gap-2 group/btn">
                             Get Lifetime Access
                             <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
                         </button>

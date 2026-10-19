@@ -2,14 +2,16 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, ArrowRight, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { trackMetaEvent, type DemoSource } from "@/lib/meta-events";
 
 interface BookingModalProps {
     isOpen: boolean;
     onClose: () => void;
+    source?: DemoSource;
 }
 
-export function BookingModal({ isOpen, onClose }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModalProps) {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: "",
@@ -21,10 +23,53 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const wasOpen = useRef(false);
+    const hasStarted = useRef(false);
+    const submitting = useRef(false);
+
+    useEffect(() => {
+        if (isOpen && !wasOpen.current) {
+            trackMetaEvent("DemoClicked", { cta_source: source });
+            trackMetaEvent("DemoFormOpened", {
+                cta_source: source,
+                form_id: "heapsync_demo",
+                form_state: step === 2 ? "submitted_unverified" : hasStarted.current ? "started" : "empty",
+            });
+        }
+        wasOpen.current = isOpen;
+    }, [isOpen, source, step]);
+
+    const handleFormChange = (event: React.FormEvent<HTMLFormElement>) => {
+        const field = event.target;
+        // Focusing a field or choosing a country/timezone alone is not a form start.
+        if (hasStarted.current || !(field instanceof HTMLInputElement) || !field.value.trim()) return;
+        hasStarted.current = true;
+        trackMetaEvent("DemoFormStarted", { cta_source: source, form_id: "heapsync_demo" });
+    };
+
+    const handleClose = () => {
+        if (submitting.current) return;
+        trackMetaEvent("DemoFormClosed", {
+            cta_source: source,
+            form_id: "heapsync_demo",
+            form_state: step === 2 ? "submitted_unverified" : hasStarted.current ? "started" : "empty",
+        });
+        if (step === 2) {
+            setStep(1);
+            setFormData({ name: "", email: "", countryCode: "+91", phone: "", demoTime: "", timezone: "UTC" });
+            hasStarted.current = false;
+        }
+        onClose();
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitting.current) return;
+        submitting.current = true;
         setIsSubmitting(true);
+        trackMetaEvent("DemoFormSubmitAttempt", {
+            cta_source: source, form_id: "heapsync_demo", submission_status: "attempted",
+        });
 
         const GOOGLE_FORM_ACTION_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdP6e7KOkNQbxOESfe4FE64x12fiaM_Px_RJtkVW7p-ybNoCg/formResponse";
 
@@ -41,12 +86,23 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                 mode: "no-cors",
                 body: formBody
             });
-            // With no-cors, we can't check response.ok, so we assume success if no network error.
+            // An opaque response proves neither acceptance by Google Forms nor a booked meeting.
+            trackMetaEvent("DemoFormSubmitUnverified", {
+                cta_source: source, form_id: "heapsync_demo", submission_status: "unverified",
+            });
+            // Lead = a valid "Book Time Slot" submit whose request did not fail. Not Schedule: no meeting is confirmed.
+            trackMetaEvent("Lead", {
+                cta_source: source, form_id: "heapsync_demo", submission_status: "unverified",
+            });
             setStep(2);
         } catch (error) {
+            trackMetaEvent("DemoFormSubmitError", {
+                cta_source: source, form_id: "heapsync_demo", submission_status: "network_error",
+            });
             console.error("Form submission failed", error);
             alert("Something went wrong. Please try again.");
         } finally {
+            submitting.current = false;
             setIsSubmitting(false);
         }
     };
@@ -60,7 +116,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
                     />
 
@@ -77,7 +133,8 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                         />
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
+                            aria-label="Close demo form"
                             className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <X className="w-5 h-5" />
@@ -91,7 +148,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                                         <p className="text-muted-foreground text-sm">See how Heapsync handles 1M+ records in microseconds.</p>
                                     </div>
 
-                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                    <form onSubmit={handleSubmit} onChange={handleFormChange} className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-medium text-muted-foreground mb-1 ml-1">FULL NAME</label>
                                             <input
@@ -201,12 +258,12 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                                     <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center mx-auto mb-6">
                                         <CheckCircle className="w-8 h-8" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-foreground mb-2">You're on the list!</h2>
+                                    <h2 className="text-2xl font-bold text-foreground mb-2">Request sent</h2>
                                     <p className="text-muted-foreground text-sm mb-8">
-                                        We will send a calendar invite to <span className="text-primary">{formData.email}</span>.
+                                        Please look out for a confirmation at <span className="text-primary">{formData.email}</span>. Your demo time is not confirmed until the team gets in touch.
                                     </p>
                                     <button
-                                        onClick={onClose}
+                                        onClick={handleClose}
                                         className="bg-secondary hover:bg-secondary/80 text-foreground px-6 py-2 rounded-lg text-sm font-medium transition-colors"
                                     >
                                         Close
