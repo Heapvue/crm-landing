@@ -51,7 +51,7 @@ export function Navbar({ onOpenModal }: NavbarProps) {
                 <div className="hidden md:flex items-center gap-8">
                     <a href="#features" onClick={(e) => handleScroll(e, "features")} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">Features</a>
                     <a href="#pricing" onClick={(e) => handleScroll(e, "pricing")} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">Pricing</a>
-                    <a href="#about" onClick={(e) => handleScroll(e, "about")} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">About</a>
+                    <a href="https://heapvue.com/about" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">About</a>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -61,7 +61,7 @@ export function Navbar({ onOpenModal }: NavbarProps) {
                         className="relative group bg-primary text-primary-foreground px-6 py-2 rounded-full font-bold text-sm overflow-hidden transition-all hover:scale-105 shadow-[0_0_20px_-5px_var(--primary)] hover:shadow-[0_0_30px_-5px_var(--primary)]"
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:animate-[shimmer_1.5s_infinite]" />
-                        <span className="relative z-10">Schedule Demo</span>
+                        <span className="relative z-10">Get in Touch</span>
                     </button>
                 </div>
             </div>

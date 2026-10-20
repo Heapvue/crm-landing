@@ -1,33 +1,25 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { MetaEvents } from "@/components/meta-events";
-import { Geist, Geist_Mono, Playfair_Display, Cookie } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-});
-
-const cookie = Cookie({
-  variable: "--font-cookie",
-  subsets: ["latin"],
-  weight: "400",
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
   title: "Heapsync - A CRM built for speed.",
   description: "The fastest self-hosted CRM for modern SMEs.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 import { ThemeProvider } from "@/components/theme-provider"
@@ -40,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${cookie.variable} antialiased`}
+        className={`${poppins.variable} font-sans antialiased`}
       >
         <Script id="meta-pixel" strategy="afterInteractive">
           {`!function(f,b,e,v,n,t,s)

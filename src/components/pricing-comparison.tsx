@@ -13,7 +13,7 @@ export function PricingComparison({ onOpenModal }: { onOpenModal: () => void }) 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-20">
                     <span className="text-primary font-mono tracking-wider uppercase text-xs border border-primary/20 px-3 py-1 rounded-full bg-primary/10">Fair Pricing</span>
-                    <h2 className="text-4xl md:text-5xl font-bold mt-6 mb-6 tracking-tighter text-foreground font-serif">
+                    <h2 className="text-4xl md:text-5xl font-bold mt-6 mb-6 tracking-tighter text-foreground">
                         Why pay <span className="text-muted-foreground/60 line-through decoration-red-500/50 decoration-4">monthly?</span>
                     </h2>
                     <p className="text-muted-foreground text-lg font-light leading-relaxed max-w-2xl mx-auto">
@@ -85,7 +85,6 @@ export function PricingComparison({ onOpenModal }: { onOpenModal: () => void }) 
                         <ul className="space-y-5 mb-10 relative z-10">
                             {[
                                 "Unlimited Users & Data",
-                                "Full Source Code Access",
                                 "Hosted on Your Private Cloud",
                                 "Microsecond Latency"
                             ].map((item, i) => (

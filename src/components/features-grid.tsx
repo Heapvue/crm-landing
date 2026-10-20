@@ -7,7 +7,7 @@ const features = [
     {
         category: "Smart Dashboard",
         icon: LayoutDashboard,
-        description: "Stay on top of everything with a unified view of birthdays, pending tasks, upcoming activities, and real-time lead status updates."
+        description: "Stay on top of everything with a unified view of pending tasks, upcoming activities, and real-time lead status updates."
     },
     {
         category: "Core CRM",
@@ -49,7 +49,7 @@ export function FeaturesGrid() {
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
                         <div>
-                            <h2 className="text-4xl md:text-5xl font-bold mt-2 mb-6 tracking-tighter text-foreground font-serif leading-tight">
+                            <h2 className="text-4xl md:text-5xl font-bold mt-2 mb-6 tracking-tighter text-foreground leading-tight">
                                 Everything you <br />
                                 need to <span className="text-muted-foreground">grow.</span>
                             </h2>
@@ -106,9 +106,17 @@ export function FeaturesGrid() {
                             <p className="text-sm text-muted-foreground">Add specific capabilities for just ₹10,000 each. Pay only for what you use.</p>
                         </div>
                     </div>
-                    <button className="relative z-10 px-6 py-3 rounded-full bg-foreground text-background font-bold hover:opacity-90 transition-opacity whitespace-nowrap">
+                    <a
+                        href="#pricing"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            const el = document.getElementById("pricing");
+                            el?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="relative z-10 px-6 py-3 rounded-full bg-foreground text-background font-bold hover:opacity-90 transition-opacity whitespace-nowrap cursor-pointer inline-flex items-center justify-center"
+                    >
                         View Pricing
-                    </button>
+                    </a>
                 </motion.div>
             </div>
         </section>

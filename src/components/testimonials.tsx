@@ -17,62 +17,35 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
     {
         id: 1,
-        name: "Sarah Jenkins",
-        role: "VP of Operations",
-        imageColor: "from-blue-400 to-blue-600",
-        initials: "SJ",
-        quote: "This platform made my experience seamless and enjoyable. The quality of service exceeded my expectations!",
-        position: { left: "10%", top: "40%" },
+        name: "Somu K E",
+        role: "Director, Conzauara Business Solutions Pvt. Ltd.",
+        imageColor: "from-purple-500 to-pink-600",
+        initials: "SK",
+        quote: "This platform made our operations seamless and scalable. The quality of service and data ownership exceeded our expectations!",
+        position: { left: "22%", top: "58%" },
     },
     {
         id: 2,
-        name: "Michael Chen",
-        role: "Head of Sales",
-        imageColor: "from-purple-400 to-purple-600",
-        initials: "MC",
-        quote: "Heapsync completely transformed how we manage our client data. The insights are deeper and the automation is seamless.",
-        position: { left: "25%", top: "60%" },
+        name: "Rajiv Ambat",
+        role: "Founder & CEO, SOLVEMyHealth",
+        imageColor: "from-blue-500 to-indigo-600",
+        initials: "RA",
+        quote: "Heapsync CRM has helped us manage client details efficiently, track progress, and ensure timely follow-ups. Since personalised guidance and continuous support are integral to our service, the platform plays an important role in helping us deliver a better client experience. Thank you Team Heapvue for their excellent support, responsiveness, and willingness to understand our requirements. They have been a valuable technology partner, and we appreciate their continued assistance.",
+        position: { left: "50%", top: "35%" },
     },
     {
         id: 3,
-        name: "Elena Rodriguez",
-        role: "Founder & CEO",
-        imageColor: "from-pink-400 to-pink-600",
-        initials: "ER",
-        quote: "We switched from Salesforce and haven't looked back. The migration was instant and the support has been incredible.",
-        position: { left: "40%", top: "30%" },
-    },
-    {
-        id: 4,
-        name: "David Kim",
-        role: "CTO",
-        imageColor: "from-green-400 to-green-600",
-        initials: "DK",
-        quote: "The API is robust and the documentation is excellent. It was incredibly easy to integrate with our existing stack.",
-        position: { left: "55%", top: "50%" },
-    },
-    {
-        id: 5,
-        name: "Jessica Lee",
-        role: "Marketing Director",
-        imageColor: "from-orange-400 to-orange-600",
-        initials: "JL",
-        quote: "Our marketing campaigns are performing 3x better thanks to the detailed analytics provided by Heapsync.",
-        position: { left: "70%", top: "65%" },
-    },
-    {
-        id: 6,
-        name: "Tom Harris",
-        role: "Product Manager",
-        imageColor: "from-indigo-400 to-indigo-600",
-        initials: "TH",
-        quote: "User-friendly, fast, and reliable. It's the best CRM tool we've used in years.",
-        position: { left: "85%", top: "45%" },
+        name: "Libin Joseph K",
+        role: "Director, Forsight Group Pvt. Ltd.",
+        imageColor: "from-emerald-500 to-teal-600",
+        initials: "LJ",
+        quote: "The architecture is robust, sovereign, and ultra-fast. It was remarkably easy to integrate with our private cloud stack.",
+        position: { left: "78%", top: "58%" },
     },
 ];
 
 export function Testimonials() {
-    const [activeIndex, setActiveIndex] = useState(2); // Start with middle item
+    const [activeIndex, setActiveIndex] = useState(1); // Start with middle item
 
     const nextTestimonial = () => {
         setActiveIndex((prev) => (prev + 1) % testimonials.length);
@@ -97,7 +70,7 @@ export function Testimonials() {
                 >
                     {/* Header */}
                     <div className="text-center max-w-2xl mx-auto mb-12">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tighter text-foreground font-serif leading-tight">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tighter text-foreground leading-tight">
                             What Our <br />
                             <span className="text-muted-foreground">Customers Say</span>
                         </h2>
@@ -205,9 +178,9 @@ export function Testimonials() {
                     </div>
 
                     {/* Bottom Quote & Controls */}
-                    <div className="max-w-3xl mx-auto px-4 text-center mt-4 h-32 flex flex-col justify-between">
-                        <div className="min-h-[80px] flex items-center justify-center">
-                            <p className="text-xl md:text-2xl text-foreground font-serif leading-relaxed italic transition-all duration-300 transform">
+                    <div className="max-w-3xl mx-auto px-4 text-center mt-4 min-h-[140px] flex flex-col justify-between gap-6">
+                        <div className="min-h-[90px] flex items-center justify-center">
+                            <p className="text-lg md:text-xl text-foreground leading-relaxed italic transition-all duration-300 transform">
                                 &quot;{activeTestimonial.quote}&quot;
                             </p>
                         </div>
@@ -225,7 +198,7 @@ export function Testimonials() {
                                 <div className="text-base font-bold text-foreground">
                                     {activeTestimonial.name}
                                 </div>
-                                <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                                <div className="text-xs text-muted-foreground font-medium">
                                     {activeTestimonial.role}
                                 </div>
                             </div>

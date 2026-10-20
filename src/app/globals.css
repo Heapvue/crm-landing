@@ -20,8 +20,9 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
+  --font-serif: var(--font-poppins);
+  --font-mono: var(--font-poppins);
 }
 
 :root {
@@ -45,13 +46,13 @@
   --ring: #3b82f6;
 
   --radius: 0.5rem;
-  --font-serif: var(--font-playfair);
+  --font-serif: var(--font-poppins);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-poppins), sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
