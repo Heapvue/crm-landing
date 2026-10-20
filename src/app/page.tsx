@@ -11,11 +11,16 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BookingModal } from "@/components/booking-modal";
 import type { DemoSource } from "@/lib/meta-events";
+import { captureUtmParams } from "@/lib/utm";
 
 function HomeContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [demoSource, setDemoSource] = useState<DemoSource>("navbar");
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    captureUtmParams();
+  }, []);
 
   const openDemo = (source: DemoSource) => {
     setDemoSource(source);
