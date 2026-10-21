@@ -40,7 +40,7 @@ export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModa
                 trackMetaEvent("DemoFormOpened", {
                     cta_source: source,
                     form_id: "heapsync_demo",
-                    form_state: step === 2 ? "submitted_unverified" : hasStarted.current ? "started" : "empty",
+                    form_state: step === 2 ? "submitted" : hasStarted.current ? "started" : "empty",
                 });
             }
         }
@@ -49,7 +49,10 @@ export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModa
 
     const handleFormChange = (event: React.FormEvent<HTMLFormElement>) => {
         const field = event.target;
-        if (hasStarted.current || !(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) || !field.value.trim()) return;
+        // Typing counts; toggling the consent checkbox or choosing a country code does not.
+        if (hasStarted.current || !(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+        if (field instanceof HTMLInputElement && (field.type === "checkbox" || field.type === "radio")) return;
+        if (!field.value.trim()) return;
         hasStarted.current = true;
         trackMetaEvent("DemoFormStarted", { cta_source: source, form_id: "heapsync_demo" });
     };
@@ -59,7 +62,7 @@ export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModa
         trackMetaEvent("DemoFormClosed", {
             cta_source: source,
             form_id: "heapsync_demo",
-            form_state: step === 2 ? "submitted_unverified" : hasStarted.current ? "started" : "empty",
+            form_state: step === 2 ? "submitted" : hasStarted.current ? "started" : "empty",
         });
         if (step === 2) {
             setStep(1);
@@ -124,6 +127,9 @@ export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModa
             utm_network: utms.utm_network || "",
         };
 
+        // network_error until the CMS answers; after that a failure means it did not accept the enquiry.
+        let failure: "network_error" | "rejected" = "network_error";
+
         try {
             const response = await fetch("https://cms.heapvue.cloud/api/v1/enquiries", {
                 method: "POST",
@@ -133,21 +139,18 @@ export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModa
                 body: JSON.stringify(payload),
             });
 
+            failure = "rejected";
             const data = await response.json();
 
             if (!response.ok || data.success === false) {
                 throw new Error(data.error || "Failed to submit enquiry. Please try again.");
             }
 
-            trackMetaEvent("DemoFormSubmitUnverified", {
-                cta_source: source,
-                form_id: "heapsync_demo",
-                submission_status: "unverified",
-            });
+            // Lead fires only here: the CMS has confirmed the enquiry. Never on failure, once per submit.
             trackMetaEvent("Lead", {
                 cta_source: source,
                 form_id: "heapsync_demo",
-                submission_status: "unverified",
+                submission_status: "confirmed",
             });
 
             setStep(2);
@@ -155,7 +158,7 @@ export function BookingModal({ isOpen, onClose, source = "navbar" }: BookingModa
             trackMetaEvent("DemoFormSubmitError", {
                 cta_source: source,
                 form_id: "heapsync_demo",
-                submission_status: "network_error",
+                submission_status: failure,
             });
             console.error("Enquiry submission failed", error);
             const msg = error instanceof Error ? error.message : "Something went wrong. Please try again.";

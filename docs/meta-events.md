@@ -1,72 +1,112 @@
-# Heapsync audience events
+# Heapsync Meta tracking
 
-Dataset / Pixel: **1142810485096006**. Website: **https://heapsync.heapvue.com/**.
+Dataset / Pixel: **1142810485096006** ("HeapSync Pixel"). Website: **https://heapsync.heapvue.com/**.
 
-The user's original base code initializes the Pixel and sends the first PageView. The added tracker sends product and interaction events specifically to this dataset. No Meta account configuration or deployment is performed by this change.
+The base code in `src/app/layout.tsx` (built by `src/lib/meta-pixel-snippet.ts`) initialises the pixel and sends the first PageView. `src/lib/meta-events.ts` and `src/components/meta-events.tsx` send the product and funnel events below to this dataset only. No Meta account configuration is done from code.
+
+## Production-only tracking and the test switch
+
+The pixel and every event are inert unless the page is on `heapsync.heapvue.com`. `localhost`, previews and any other host send nothing, so test traffic cannot reach the audiences (46 of the first 106 events came from localhost before this was added).
+
+To test on another host (for example `npm run dev`), open any page with `?meta_debug=1`, e.g. `http://localhost:3000/?meta_debug=1`. The switch is stored for that browser tab session, so route changes and the demo form keep tracking. `?meta_debug=0` turns it off. The flag does nothing on the production host (always on).
+
+Debug traffic is real traffic to the production dataset. Use Events Manager > Test Events with a test event code when you do this, and do not submit real enquiries. The `<noscript>` pixel image cannot be host-gated; it only runs for visitors with JavaScript disabled.
 
 ## Event contract
 
 | Event | Type | Trigger | Frequency |
 | --- | --- | --- | --- |
-| PageView | Standard | Original base code on page load; added tracker on a changed Next.js route | Once per load or route transition; no extra initial PageView |
-| ViewContent | Standard | Heapsync home page appears | Once per home-page visit |
-| FeaturesViewed | Custom | At least half of the features heading is visible continuously for one second in a visible tab | Once per page visit |
-| PricingViewed | Custom | At least half of the pricing heading is visible continuously for one second in a visible tab | Once per page visit |
-| DemoClicked | Custom | A demo CTA opens the modal | Once per opening; carries button source |
-| DemoFormOpened | Custom | Modal opens, including reopening a saved in-page draft | Once per opening |
-| DemoFormStarted | Custom | First nonempty change to a text, email, phone or date/time input | Once per form journey; focusing or changing a country/timezone alone does not count |
-| DemoFormClosed | Custom | Visitor closes modal through its backdrop or close button | Once per close; carries empty, started or submitted_unverified state |
-| DemoFormSubmitAttempt | Custom | A browser-valid form submission begins | Once per request; rapid double submissions are blocked |
-| DemoFormSubmitUnverified | Custom | Google Forms no-cors fetch resolves | Once per resolved request; **not confirmed acceptance or a booked demo** |
-| Lead | Standard | Same moment as DemoFormSubmitUnverified: a valid "Book Time Slot" submit whose request did not fail | Once per resolved request; **a demo request, not a verified or booked lead** |
-| DemoFormSubmitError | Custom | Submission fetch rejects | Once per network failure; a later retry can succeed |
+| PageView | Standard | Base code on page load; the tracker on a changed Next.js route | Once per load or route change; no extra initial PageView |
+| ViewContent | Standard | Home page appears | Once per home-page visit |
+| FeaturesViewed | Custom | At least half of the features heading visible for one continuous second in a visible tab | Once per page visit |
+| PricingViewed | Custom | Same rule for the pricing heading | Once per page visit |
+| DemoClicked | Custom | A demo CTA opens the enquiry form | Once per opening; carries `cta_source` |
+| DemoFormOpened | Custom | The form opens, including reopening a saved draft | Once per opening |
+| DemoFormStarted | Custom | First non-empty typing in a text, email, phone or message field | Once per form journey. Toggling the consent checkbox or choosing a country code does not count |
+| DemoFormClosed | Custom | Form closed via backdrop or close button | Once per close; `form_state` is `empty`, `started` or `submitted` |
+| DemoFormSubmitAttempt | Custom | A valid submit begins (consent ticked) | Once per request; rapid repeat submits are blocked |
+| DemoFormSubmitError | Custom | The submit did not succeed | Once per failure; `submission_status` is `network_error` (no usable response) or `rejected` (the CMS answered but did not accept) |
+| **Lead** | **Standard** | **The CMS confirms the enquiry (HTTP ok and `success` not false)** | **Once per successful submit, never on failure** |
 
-FeaturesViewed and PricingViewed indicate exposure to the section heading, not proof that every feature or price was read. Mobile tracking observes headings rather than an unreachable percentage of a tall section. Brief scrolling and background tabs do not satisfy the one-second visibility condition. Form close means a deliberate close in this page, not a proven permanent abandonment. Navigation away and tab closure are not inferred as confirmed abandonment.
+`DemoFormSubmitUnverified` no longer exists. It was a stand-in for "the request resolved" while the form posted to Google Forms and the response could not be read. Now that the CMS returns a readable result, `Lead` carries that meaning on its own, and a second event for the same moment would only invite double counting. Use `Lead` for conversion goals and for excluding converted visitors.
 
-Common parameters: product=heapsync, content_name=Heapsync CRM, content_category=CRM, content_ids=[heapsync-crm]. Each added event has a unique eventID. Names, email addresses, phone numbers, field contents and error messages are not added to these event payloads. No new advanced matching is configured. Meta's existing base script and account settings can have their own behaviour; inspect the actual live requests in Test Events.
+`Schedule` is not fired. A submitted enquiry is not a confirmed meeting. Fire `Schedule` only when a meeting is actually booked (for example when the CRM marks a demo as scheduled).
 
-Form events carry form_id=heapsync_demo. Button sources are navbar, hero_get_started, hero_lifetime_access, pricing_lifetime_access, footer_get_started and footer_contact_sales. The navbar's demo form on legal pages uses the same source. Form entry is preserved across closing and reopening an unfinished draft; a sent request resets on close so another request is a new journey.
+Common parameters on every event: `product=heapsync`, `content_name=Heapsync CRM`, `content_category=CRM`, `content_ids=[heapsync-crm]`. Form events add `form_id=heapsync_demo`. Demo CTA sources (`cta_source`): `navbar`, `hero_get_started`, `hero_lifetime_access`, `pricing_lifetime_access`, `footer_get_started`, `footer_contact_sales` (the navbar button on the legal pages also reports `navbar`). `Lead` carries `cta_source`, `form_id` and `submission_status=confirmed`.
 
-The existing section-query cleanup now removes only section, preserving utm_source, utm_medium, utm_campaign, utm_content, fbclid and other existing parameters for attribution.
+Each event has a unique `eventID`. Only the parameters listed here are ever sent: names, email addresses, phone numbers, company, message text, UTM values and error messages are never added to Meta events. No advanced matching is configured in code; Meta's own account settings and base-script behaviour (for example automatic cookies) still apply, so check the live requests in Test Events.
+
+## UTM naming convention (ad links)
+
+Set these in the ad's URL parameters (Meta Ads Manager > Ad > Tracking > URL parameters):
+
+```
+utm_source=facebook&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}&utm_id={{campaign.id}}&utm_placement={{placement}}
+```
+
+| Parameter | Value | Example after Meta fills it in |
+| --- | --- | --- |
+| utm_source | `facebook` (fixed) | facebook |
+| utm_medium | `paid_social` (fixed) | paid_social |
+| utm_campaign | `{{campaign.name}}` | `hv_leads_q426` |
+| utm_term | `{{adset.name}}` | `hsync_in_broad_lead` |
+| utm_content | `{{ad.name}}` | `hsync_ownership_4x5_v1` |
+| utm_id | `{{campaign.id}}` | numeric campaign ID |
+| utm_placement | `{{placement}}` | e.g. `Facebook_Mobile_Feed` |
+
+Naming rules for campaign, ad set and ad names: lowercase, underscores instead of spaces, no other punctuation, so the same text appears in the CMS and in reports. Pattern used so far: campaign `<brand>_<goal>_<quarter>`, ad set `<product>_<country>_<targeting>_<goal>`, ad `<product>_<message>_<format>_<version>`.
+
+What the site does with them: `src/lib/utm.ts` reads `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `utm_id`, `utm_placement` (and `utm_device`, `utm_network` if present) from the landing URL and keeps them in `sessionStorage` (`heapsync_utms`) for the tab session. The booking form sends them to the CMS with each enquiry, so every lead can be traced to a campaign, ad set and ad. They are not sent to Meta; Meta already knows its own campaign structure.
+
+`fbclid`: Meta adds this to ad clicks automatically. The site leaves it in the URL (the `?section=` cleanup removes only `section`), and the Meta pixel reads it and stores it in its own first-party `_fbc` cookie; the pixel also sets `_fbp`. Nothing in the site code needs to handle it. It is **not** sent to the CMS today.
+
+### Before a later Conversions API (CAPI) send
+
+To send Lead server-side later and have Meta de-duplicate it with the browser Lead, the CMS record needs more than UTMs. Ask the CMS owner to accept these optional fields (the payload contract was not changed here because the endpoint's accepted fields are not documented):
+
+- `fbclid`, `fbp`, `fbc` (the cookie values, read in the browser at submit time)
+- `lead_event_id`: generate the Lead `eventID` *before* the POST, send it to the CMS, then pass the same ID to `fbq`. The CAPI call then reuses it.
+
+Without these, server-side events can only match on hashed email and phone, and cannot de-duplicate against the browser Lead.
 
 ## Audience recipes
 
-These are suggested starting windows, not audiences already created in an ad account. Use the new Heapsync dataset and the deployed Heapsync domain. Check available event/parameter filters in your account.
+These are starting points, not audiences that exist in an ad account. Use dataset `1142810485096006` and exclude `Lead` everywhere you are not targeting converted visitors.
 
 | Scenario | Include | Exclude | Starting window / message |
 | --- | --- | --- | --- |
-| Visited the product site | ViewContent | DemoFormStarted, DemoFormSubmitUnverified and known leads/customers | 30 days; explain the CRM and eight core modules |
-| Explored features | FeaturesViewed | DemoFormSubmitUnverified and known leads/customers | 14–30 days; demonstrate how modules fit a business |
-| Looked at pricing | PricingViewed | DemoFormSubmitUnverified and known leads/customers | 14 days; explain ₹70,000 base and ₹10,000 per extra module |
-| Opened form without beginning | DemoFormOpened | DemoFormStarted, DemoFormSubmitUnverified and known leads/customers | 7–14 days; invite product questions |
-| Started form without a sent request | DemoFormStarted | DemoFormSubmitUnverified and known leads/customers | 7–14 days; offer help choosing a setup |
-| Closed an unfinished form | DemoFormClosed with form_state=started | DemoFormSubmitUnverified and known leads/customers | 7 days; offer a requirements discussion |
-| Submission had a network error | DemoFormSubmitError | DemoFormSubmitUnverified and known leads/customers | 1–7 days; invite another attempt or conversation |
+| Visited the product site | ViewContent | Lead, DemoFormStarted | 30 days; explain the CRM and its modules |
+| Explored features | FeaturesViewed | Lead | 14-30 days; show how the modules fit a business |
+| Looked at pricing | PricingViewed | Lead | 14 days; explain the pricing |
+| Opened the form without typing | DemoFormOpened | DemoFormStarted, Lead | 7-14 days; invite product questions |
+| Started the form, did not finish | DemoFormStarted | Lead | 7-14 days; offer help choosing a setup |
+| Closed an unfinished form | DemoFormClosed with `form_state=started` | Lead | 7 days; offer a requirements discussion |
+| Submission failed | DemoFormSubmitError | Lead | 1-7 days; invite another attempt or a call |
+| Converted leads | Lead | (none) | Use for lookalikes and to exclude from prospecting |
 
-DemoFormSubmitUnverified is only a practical proxy for suppressing recovery ads after a request was sent. It is not a source of verified customer/lead status. Until verified conversion receipt exists, avoid presenting this event as a qualified lead or selecting it as a confirmed-lead conversion goal. Imported/CRM-confirmed leads and customers remain the source for reliable suppression. Exclusions are audience rules applied across their chosen time windows, not a reconstruction of an individual browsing session. Overlapping groups need exclusions if run as separate ad sets.
+Exclusions are audience rules applied across the chosen windows, not a reconstruction of one browsing session. Overlapping audiences need exclusions if they run as separate ad sets. CRM-confirmed customers remain the reliable suppression list; upload it when the CRM is linked.
 
-## Lead is a proxy; Schedule is not fired
+## Known risks in the CMS form flow
 
-Lead fires when the Book Time Slot form is validly submitted and the request does not fail, so Meta can optimise for demo requests. It is a proxy: the response is opaque, so it can overcount if Google rejects an entry. Schedule is not fired because no meeting is confirmed. This project uses output: export and GitHub Pages. The form sends a direct no-cors POST to Google Forms, which gives this page an opaque response. A resolved promise cannot show whether Google accepted the fields, and a requested time is not an accepted calendar booking. HTTP failures returned as opaque responses can also resolve the fetch.
-
-For confirmed Lead tracking, add a receiving service that validates and persists a request and returns a readable success acknowledgement with an enquiry ID. Fire Lead once for that receipt, then use it for recovery exclusions. If browser and server both send the same conversion, share the same event ID for that occurrence. Fire Schedule only after a meeting is actually confirmed. That receiving infrastructure and Conversions API integration are outside the current browser-event change.
+- **Non-JSON success looks like a failure.** The form calls `response.json()` on the reply. If the CMS ever answers 2xx with an empty or non-JSON body, the visitor sees an error although the enquiry may have been saved. They retry (duplicate CMS record) and Lead does not fire. Treat a 2xx as success and read the body defensively.
+- **Pre-ticked consent.** The privacy checkbox is ticked by default (`agree: true`). Pre-ticked consent is generally not valid under GDPR/DPDP.
+- **Spam and bots.** The endpoint is called straight from the browser with no visible captcha or honeypot. Bot submissions would fire Lead and distort ad optimisation.
+- **Server error text is shown to visitors verbatim** (`data.error`).
 
 ## Verification after deployment
 
-1. Deploy this code through the site's normal workflow. These changes have only been tested locally.
-2. Open the new Heapsync dataset in Events Manager → Test Events and open the deployed website with any blocking extensions disabled for the test.
-3. Confirm one initial PageView and one ViewContent on the home page. Scroll to Features and Pricing, pause for a second, then scroll away and back: each section event should appear once for that visit.
-4. Open each demo CTA and inspect cta_source. Focus a blank field: DemoFormStarted should not appear. Type a value: it should appear once. Edit other fields: it should not repeat.
-5. Close and reopen the unfinished draft. Inspect DemoFormClosed's form_state=started and the new DemoFormOpened event.
-6. Use a designated test enquiry only if the receiving team expects it. Inspect SubmitAttempt, SubmitUnverified and Lead (one each per resolved request); Schedule must not appear. Check received enquiries separately in Google Forms. A live test here was not performed by the agent.
-7. Check that the custom events are visible and accepted for use in your account. Review any existing Event Setup Tool or automatic-event rules so the same interaction is not counted twice as a lead.
-8. Create the relevant website Custom Audiences and exclusions. Live Meta receipt, account permissions, audience eligibility/size and delivery remain account-side checks.
+1. Deploy through the normal workflow. Local tests do not prove the live site.
+2. Open the Heapsync dataset > Test Events and open `https://heapsync.heapvue.com/`. Confirm one PageView and one ViewContent.
+3. Scroll to Features and Pricing and pause a second: each section event appears once per visit.
+4. Open each demo button and check `cta_source`. Tick and untick the consent box: no DemoFormStarted. Type in a field: DemoFormStarted once.
+5. Close and reopen an unfinished draft: DemoFormClosed has `form_state=started`, then a new DemoFormOpened.
+6. Submit one test enquiry that the CMS team expects. Confirm DemoFormSubmitAttempt then Lead (`submission_status=confirmed`), no Schedule, and that the CMS stored the enquiry with its UTMs.
+7. Open the site from `localhost` without `?meta_debug=1`: no events should arrive.
+8. After a day of real traffic, create the audiences above and check their eligibility and size in Ads Manager.
 
 ## Local validation
 
-- npm run build — production static export passes.
-- npm run lint — no errors; existing unused-import and noscript-img warnings remain.
-- npm run test:tracking — six Node tests cover initial PageView deduplication, route changes, early event queue, section deduplication, safe payloads, unique IDs and tracking failures.
-- npm run test:tracking:browser — requires Playwright available locally, or PLAYWRIGHT_MODULE pointing to an installed package; TEST_BROWSER_PATH optionally selects the Chromium executable. Run after the production build. Tests cover desktop/mobile heading exposure, all six CTA sources, preserved attribution, focus vs input, reopened drafts, submission failure/retry, duplicate submit blocking and no false conversions. All external requests are intercepted; no enquiry or Meta event is sent outside the local test.
-
-Reference supplied by the user: https://eventsmanager.facebook.com/business/help/402791146561655 . It redirected to a Meta login page during this session. The public Meta developer reference endpoints returned rate limits, so their current text was not available to inspect.
+- `npm run build`: production static export passes.
+- `npm run lint`: no errors; existing unused-variable and `<noscript><img>` warnings remain.
+- `npm run test:tracking`: 8 Node tests cover initial PageView de-duplication, route changes, the early-event queue, section de-duplication, safe payloads and unique IDs, the Lead standard-event path, tracker failures, host gating and the base snippet.
+- `npm run test:tracking:browser`: needs Playwright (set `PLAYWRIGHT_MODULE` to an installed package, optionally `TEST_BROWSER_PATH`) and a prior `npm run build`. It mocks the CMS (network failure, rejection, confirmation) and blocks all outside traffic. It covers desktop and mobile section events, preserved `utm_*` and `fbclid`, all six CTA sources, form start and close, Lead once only on confirmation, duplicate-submit blocking, privacy of payloads, and silence off the production host.

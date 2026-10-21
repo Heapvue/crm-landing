@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { MetaEvents } from "@/components/meta-events";
+import { HEAPSYNC_PIXEL_ID, META_DEBUG_KEY, META_PRODUCTION_HOSTS } from "@/lib/meta-events";
+import { buildMetaPixelSnippet } from "@/lib/meta-pixel-snippet";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -35,16 +37,11 @@ export default function RootLayout({
         className={`${poppins.variable} font-sans antialiased`}
       >
         <Script id="meta-pixel" strategy="afterInteractive">
-          {`!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1142810485096006');
-fbq('track', 'PageView');`}
+          {buildMetaPixelSnippet({
+            pixelId: HEAPSYNC_PIXEL_ID,
+            hosts: META_PRODUCTION_HOSTS,
+            debugKey: META_DEBUG_KEY,
+          })}
         </Script>
         <ThemeProvider
           forcedTheme="dark"
@@ -58,7 +55,7 @@ fbq('track', 'PageView');`}
             height="1"
             width="1"
             style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=1142810485096006&ev=PageView&noscript=1"
+            src={`https://www.facebook.com/tr?id=${HEAPSYNC_PIXEL_ID}&ev=PageView&noscript=1`}
             alt=""
           />
         </noscript>

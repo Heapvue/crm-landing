@@ -24,14 +24,18 @@ const server = http.createServer((req, res) => {
   const browser = await chromium.launch({ headless: true, ...(process.env.TEST_BROWSER_PATH ? { executablePath: process.env.TEST_BROWSER_PATH } : {}) });
   try {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    let networkFailure = true;
-    let formPosts = 0;
+    let cmsMode = 'network'; // network | reject | ok
+    let cmsPosts = 0;
     await context.route('**/*', route => {
       const url = new URL(route.request().url());
       if (url.origin === origin) return route.continue();
-      if (url.hostname === 'docs.google.com' && url.pathname.endsWith('/formResponse')) {
-        formPosts += 1;
-        return networkFailure ? route.abort('failed') : route.fulfill({ status: 200, body: 'mock acknowledgement' });
+      if (url.hostname === 'cms.heapvue.cloud' && url.pathname === '/api/v1/enquiries') {
+        const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'Content-Type', 'access-control-allow-methods': 'POST' };
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 200, headers: cors });
+        cmsPosts += 1;
+        if (cmsMode === 'network') return route.abort('failed');
+        if (cmsMode === 'reject') return route.fulfill({ status: 400, headers: cors, contentType: 'application/json', body: JSON.stringify({ success: false, error: 'Mock rejection' }) });
+        return route.fulfill({ status: 201, headers: cors, contentType: 'application/json', body: JSON.stringify({ success: true }) });
       }
       return route.abort(); // Never send test data or events outside this machine.
     });
@@ -43,7 +47,7 @@ const server = http.createServer((req, res) => {
     page.on('dialog', dialog => dialog.accept());
     const events = name => page.evaluate(name => window.__metaCalls.filter(x => (x[0] === 'trackSingle' || x[0] === 'trackSingleCustom') && x[2] === name), name);
     const waitEvent = (name, count) => page.waitForFunction(({ name, count }) => window.__metaCalls.filter(x => x[2] === name).length === count, { name, count });
-    await page.goto(origin + '/?section=pricing&utm_source=instagram&utm_content=workflow&fbclid=test_click_id');
+    await page.goto(origin + '/?section=pricing&utm_source=instagram&utm_content=workflow&fbclid=test_click_id&meta_debug=1');
     await waitEvent('ViewContent', 1);
     await page.waitForFunction(() => !new URL(location.href).searchParams.has('section'));
     assert.equal(new URL(page.url()).searchParams.get('utm_content'), 'workflow');
@@ -57,29 +61,39 @@ const server = http.createServer((req, res) => {
     const base = await page.evaluate(() => window.__metaCalls.filter(x => x[0] === 'track' && x[1] === 'PageView'));
     assert.equal(base.length, 1, 'initial PageView belongs to the original base code only');
 
-    await page.getByRole('button', { name: 'Schedule Demo', exact: true }).click();
+    await page.getByRole('button', { name: 'Get in Touch', exact: true }).click();
     await waitEvent('DemoFormOpened', 1);
-    await page.locator('input[type=text]').focus();
+    await page.locator('input[type=text]').first().focus();
     assert.equal((await events('DemoFormStarted')).length, 0);
-    await page.locator('input[type=text]').fill('Tracking Test Person');
+    await page.locator('#agree-checkbox').click();
+    await page.locator('#agree-checkbox').click();
+    assert.equal((await events('DemoFormStarted')).length, 0, 'toggling the consent checkbox is not a form start');
+    await page.locator('input[type=text]').first().fill('Tracking Test Person');
     await page.locator('input[type=email]').fill('tracking-test@example.test');
     assert.equal((await events('DemoFormStarted')).length, 1);
-    await page.getByRole('button', { name: 'Close demo form', exact: true }).click();
+    await page.getByRole('button', { name: 'Close enquiry form', exact: true }).click();
     await page.locator('form').waitFor({ state: 'detached' });
     assert.equal((await events('DemoFormClosed'))[0][3].form_state, 'started');
-    await page.getByRole('button', { name: 'Schedule Demo', exact: true }).click();
+    await page.getByRole('button', { name: 'Get in Touch', exact: true }).click();
     await page.locator('input[type=tel]').fill('9990001234');
-    await page.locator('input[type=datetime-local]').fill('2026-12-01T10:00');
     assert.equal((await events('DemoFormStarted')).length, 1, 'reopened draft is the same form journey');
+
+    // 1) no usable response, 2) CMS rejects, 3) CMS confirms. Only the last may fire Lead.
     await page.locator('form').evaluate(form => form.requestSubmit());
     await waitEvent('DemoFormSubmitError', 1);
-    assert.equal((await events('DemoFormSubmitUnverified')).length, 0);
-    networkFailure = false;
+    assert.equal((await events('DemoFormSubmitError')).at(-1)[3].submission_status, 'network_error');
+    cmsMode = 'reject';
+    await page.locator('form').evaluate(form => form.requestSubmit());
+    await waitEvent('DemoFormSubmitError', 2);
+    assert.equal((await events('DemoFormSubmitError')).at(-1)[3].submission_status, 'rejected');
+    assert.equal((await events('Lead')).length, 0, 'no Lead on failure');
+    cmsMode = 'ok';
     await page.locator('form').evaluate(form => { form.requestSubmit(); form.requestSubmit(); });
-    await waitEvent('DemoFormSubmitUnverified', 1);
-    await page.getByRole('heading', { name: 'Request sent', exact: true }).waitFor();
-    assert.equal((await events('DemoFormSubmitAttempt')).length, 2, 'double-submit guard blocks duplicate network requests');
-    assert.equal(formPosts, 2);
+    await waitEvent('Lead', 1);
+    await page.getByRole('heading', { name: 'Enquiry Received!', exact: true }).waitFor();
+    assert.equal((await events('Lead'))[0][3].submission_status, 'confirmed');
+    assert.equal((await events('DemoFormSubmitAttempt')).length, 3, 'double-submit guard blocks duplicate network requests');
+    assert.equal(cmsPosts, 3);
     await page.getByRole('button', { name: 'Close', exact: true }).click();
     await page.locator('form').waitFor({ state: 'detached' });
 
@@ -94,14 +108,14 @@ const server = http.createServer((req, res) => {
       await page.locator('form').waitFor();
       const clicked = await events('DemoClicked');
       assert.equal(clicked.at(-1)[3].cta_source, source);
-      await page.getByRole('button', { name: 'Close demo form', exact: true }).click();
+      await page.getByRole('button', { name: 'Close enquiry form', exact: true }).click();
       await page.locator('form').waitFor({ state: 'detached' });
     }
     const calls = await page.evaluate(() => window.__metaCalls);
     const tracked = calls.filter(x => x[0] === 'trackSingle' || x[0] === 'trackSingleCustom');
     assert.ok(tracked.every(x => x[1] === '1142810485096006'));
     assert.equal(tracked.filter(x => x[2] === 'Lead').length, 1, 'one Lead for the one resolved submission; failed attempt fires none');
-    assert.ok(!tracked.some(x => x[2] === 'Schedule'));
+    assert.ok(!tracked.some(x => x[2] === 'Schedule' || x[2] === 'DemoFormSubmitUnverified'));
     assert.ok(!JSON.stringify(tracked).includes('tracking-test@example.test'));
     assert.ok(!JSON.stringify(tracked).includes('Tracking Test Person'));
     assert.ok(!JSON.stringify(tracked).includes('9990001234'));
@@ -112,7 +126,16 @@ const server = http.createServer((req, res) => {
     await waitEvent('PricingViewed', 1);
     await page.locator('#features h2').scrollIntoViewIfNeeded();
     await waitEvent('FeaturesViewed', 1);
-    console.log('PASS: desktop/mobile visibility, attribution, all CTA sources, form lifecycle, duplicate-submit guard, retries, privacy and no false conversions. All external requests intercepted.');
+
+    // Off the production host and without ?meta_debug=1 nothing may be sent.
+    const quiet = await context.newPage();
+    await quiet.goto(origin + '/');
+    await quiet.getByRole('button', { name: 'Get in Touch', exact: true }).click();
+    await quiet.locator('form').waitFor();
+    await quiet.locator('input[type=text]').first().fill('Nobody');
+    await quiet.waitForTimeout(500);
+    assert.equal((await quiet.evaluate(() => window.__metaCalls)).length, 0, 'no pixel calls on a non-production host');
+    console.log('PASS: host gating, desktop/mobile visibility, attribution, all CTA sources, form lifecycle, CMS failure/rejection/confirmation, Lead once, duplicate-submit guard, privacy and no false conversions. All external requests intercepted.');
     await context.close();
   } finally {
     await browser.close();

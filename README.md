@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Heapsync ad tracking
 
-Pixel **1142810485096006** tracks the landing-page and demo-form funnel. See [the event and audience guide](docs/meta-events.md) for the event definitions, retargeting recipes, local tests and post-deployment checks. A valid Book Time Slot submit fires Lead as a proxy (Google Forms responses are unverifiable); Schedule is not fired.
+Pixel **1142810485096006** tracks the landing-page and enquiry-form funnel, and fires only on `heapsync.heapvue.com`. Add `?meta_debug=1` to a URL to test on localhost or a preview. `Lead` fires once, only after the CMS confirms the enquiry. See [the event, UTM and audience guide](docs/meta-events.md) for the event list, the ad-link UTM convention, retargeting recipes, tests and post-deployment checks.
 
 ## Getting Started
 

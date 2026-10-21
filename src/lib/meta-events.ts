@@ -1,6 +1,25 @@
 // The base code in app/layout.tsx initializes this dataset and sends the first PageView.
 export const HEAPSYNC_PIXEL_ID = "1142810485096006";
 
+// The pixel and every event are inert off these hosts, so localhost and previews never pollute
+// the dataset. Open any page with ?meta_debug=1 to switch tracking on for the browser session
+// (?meta_debug=0 switches it off again). The base snippet in layout.tsx applies the same rule.
+export const META_PRODUCTION_HOSTS = ["heapsync.heapvue.com"];
+export const META_DEBUG_KEY = "heapsync_meta_debug";
+
+export function isMetaTrackingEnabled() {
+    if (typeof window === "undefined") return false;
+    try {
+        if (META_PRODUCTION_HOSTS.includes(window.location.hostname)) return true;
+        const flag = new URLSearchParams(window.location.search).get("meta_debug");
+        if (flag === "1") return true;
+        if (flag === "0") return false;
+        return window.sessionStorage.getItem(META_DEBUG_KEY) === "1";
+    } catch {
+        return false;
+    }
+}
+
 export type DemoSource =
     | "navbar"
     | "hero_get_started"
@@ -20,15 +39,16 @@ export type MetaEventName =
     | "DemoFormStarted"
     | "DemoFormClosed"
     | "DemoFormSubmitAttempt"
-    | "DemoFormSubmitUnverified"
     | "DemoFormSubmitError";
 
 // Deliberately exclude names, emails, phone numbers, field values and arbitrary URLs.
 type EventDetails = {
     cta_source?: DemoSource;
     form_id?: "heapsync_demo";
-    form_state?: "empty" | "started" | "submitted_unverified";
-    submission_status?: "attempted" | "unverified" | "network_error";
+    form_state?: "empty" | "started" | "submitted";
+    // confirmed: the CMS accepted the enquiry. rejected: the CMS answered but did not accept it.
+    // network_error: no usable response (offline, blocked, CORS or timeout).
+    submission_status?: "attempted" | "confirmed" | "rejected" | "network_error";
 };
 
 declare global {
@@ -95,7 +115,7 @@ export function flushMetaEvents() {
 }
 
 export function trackMetaEvent(name: MetaEventName, details: EventDetails = {}, onceKey?: string) {
-    if (typeof window === "undefined") return;
+    if (!isMetaTrackingEnabled()) return;
     if (onceKey && onceKeys.has(onceKey)) return;
     if (onceKey) onceKeys.add(onceKey);
 
