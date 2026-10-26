@@ -10,16 +10,18 @@ const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Heapsync - A CRM built for speed.",
-  description: "The fastest self-hosted CRM for modern SMEs.",
+  title: "Heapsync - Eliminate Monthly Recurring & Per-User CRM Fees",
+  description: "The perpetual self-hosted CRM built to eliminate recurring subscription costs and per-user fees forever. Complete data sovereignty on your private infrastructure.",
   icons: {
     icon: [
       { url: "/favicon.ico" },
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/images/minilogo_heapvue.png", type: "image/png" },
     ],
+    shortcut: "/images/minilogo_heapvue.png",
     apple: "/apple-icon.png",
   },
 };
@@ -32,9 +34,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <body
-        className={`${poppins.variable} font-sans antialiased`}
+        className={`${poppins.className} font-sans antialiased`}
       >
         <Script id="meta-pixel" strategy="afterInteractive">
           {buildMetaPixelSnippet({
@@ -44,7 +46,7 @@ export default function RootLayout({
           })}
         </Script>
         <ThemeProvider
-          forcedTheme="dark"
+          forcedTheme="light"
           disableTransitionOnChange
         >
           {children}

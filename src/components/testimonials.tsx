@@ -1,218 +1,166 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Testimonial {
     id: number;
-    name: string;
-    role: string;
-    imageColor: string;
-    initials: string;
+    company: string;
+    logoSrc: string;
     quote: string;
-    position: { left: string; top: string }; // Position relative to wave container
+    authorName: string;
+    authorTitle: string;
+    avatar: string;
+    services: string[];
 }
 
-const testimonials: Testimonial[] = [
+const testimonialsData: Testimonial[] = [
     {
         id: 1,
-        name: "Somu K E",
-        role: "Director, Conzauara Business Solutions Pvt. Ltd.",
-        imageColor: "from-purple-500 to-pink-600",
-        initials: "SK",
-        quote: "This platform made our operations seamless and scalable. The quality of service and data ownership exceeded our expectations!",
-        position: { left: "22%", top: "58%" },
+        company: "SOLVEMyHealth",
+        logoSrc: "/images/clients/solvemyhealth.webp",
+        quote: "“Heapsync CRM has helped us manage client details efficiently, track progress, and ensure timely follow-ups. Since personalised guidance and continuous support are integral to our service, the platform plays an important role in helping us deliver a better client experience. Thank you Team Heapvue for their excellent support, responsiveness, and willingness to understand our requirements. They have been a valuable technology partner, and we appreciate their continued assistance.”",
+        authorName: "Rajiv Ambat",
+        authorTitle: "Founder & CEO, SOLVEMyHealth",
+        avatar: "/images/clients/rajiv-ambat.png",
+        services: ["HIPAA-Compliant Sovereignty", "Customer Intelligence", "Automated Follow-ups"],
     },
     {
         id: 2,
-        name: "Rajiv Ambat",
-        role: "Founder & CEO, SOLVEMyHealth",
-        imageColor: "from-blue-500 to-indigo-600",
-        initials: "RA",
-        quote: "Heapsync CRM has helped us manage client details efficiently, track progress, and ensure timely follow-ups. Since personalised guidance and continuous support are integral to our service, the platform plays an important role in helping us deliver a better client experience. Thank you Team Heapvue for their excellent support, responsiveness, and willingness to understand our requirements. They have been a valuable technology partner, and we appreciate their continued assistance.",
-        position: { left: "50%", top: "35%" },
+        company: "Forsight",
+        logoSrc: "/images/clients/forsight.png",
+        quote: "“The architecture is robust, sovereign, and ultra-fast. It was remarkably easy to integrate with our private cloud stack. Every CRM tool is rushing to add bloated subscriptions, but there's no way to control data sprawl. Heapsync gave us sovereign ownership and zero recurring overhead.”",
+        authorName: "Libin Joseph K",
+        authorTitle: "Director, Forsight Group Pvt. Ltd.",
+        avatar: "/images/clients/libin-joseph.jpg",
+        services: ["Zero Trust Architecture", "Microsecond Latency", "Private Cloud Integration"],
     },
     {
         id: 3,
-        name: "Libin Joseph K",
-        role: "Director, Forsight Group Pvt. Ltd.",
-        imageColor: "from-emerald-500 to-teal-600",
-        initials: "LJ",
-        quote: "The architecture is robust, sovereign, and ultra-fast. It was remarkably easy to integrate with our private cloud stack.",
-        position: { left: "78%", top: "58%" },
+        company: "Conzaura",
+        logoSrc: "/images/clients/conzaura.png",
+        quote: "“Heapsync is an exceptional CRM that combines power with simplicity. Its intuitive interface ensures a smooth user experience and a very short learning curve for teams.”",
+        authorName: "Somu K E",
+        authorTitle: "Director, Conzauara Business Solutions Pvt. Ltd.",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=85",
+        services: ["Commerce Intelligence", "Automated Workflows", "Perpetual License"],
     },
 ];
 
+const count = testimonialsData.length;
+
 export function Testimonials() {
-    const [activeIndex, setActiveIndex] = useState(1); // Start with middle item
+    const [currentIndex, setCurrentIndex] = useState(0);
 
-    const nextTestimonial = () => {
-        setActiveIndex((prev) => (prev + 1) % testimonials.length);
+    const handlePrev = () => {
+        setCurrentIndex((prev) => (prev === 0 ? count - 1 : prev - 1));
     };
 
-    const prevTestimonial = () => {
-        setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    const handleNext = () => {
+        setCurrentIndex((prev) => (prev === count - 1 ? 0 : prev + 1));
     };
-
-    const activeTestimonial = testimonials[activeIndex];
 
     return (
-        <section className="py-24 bg-background relative overflow-hidden flex flex-col items-center">
+        <section className="testimonials-section-wrapper">
+            <div className="testimonials-container">
+                {/* Top Content: Badge & Heading */}
+                <div className="testimonials-top-content">
+                    <div className="testimonials-badge-capsule">
+                        <span className="badge-bullet"></span>
+                        <span className="badge-text">Testimonials</span>
+                    </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8 }}
-                    className=""
-                >
-                    {/* Header */}
-                    <div className="text-center max-w-2xl mx-auto mb-12">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tighter text-foreground leading-tight">
-                            What Our <br />
-                            <span className="text-muted-foreground">Customers Say</span>
+                    <div className="trusted-heading-wrapper">
+                        <h2 className="testimonials-heading">
+                            <span className="testimonials-heading-accent">Trusted</span> by Businesses <br />
+                            Building for the Future
                         </h2>
-                        <p className="text-muted-foreground text-lg font-light leading-relaxed">
-                            Real stories from real people! See how our services have transformed their experiences.
-                        </p>
                     </div>
+                </div>
 
-                    {/* Wave Container */}
-                    <div className="relative w-full h-[300px] my-4 hidden md:block">
-                        {/* SVG Wave Line */}
-                        <svg
-                            className="absolute top-1/2 left-0 w-full -translate-y-1/2 overflow-visible"
-                            height="150"
-                            viewBox="0 0 1200 150"
-                            fill="none"
-                            preserveAspectRatio="none"
-                        >
-                            <defs>
-                                <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor="transparent" />
-                                    <stop offset="50%" stopColor="var(--primary)" stopOpacity="1" />
-                                    <stop offset="100%" stopColor="transparent" />
-                                </linearGradient>
-                                <filter id="glow-wave" x="-20%" y="-20%" width="140%" height="140%">
-                                    <feGaussianBlur stdDeviation="3" result="blur" />
-                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                </filter>
-                            </defs>
-
-                            {/* Base Line */}
-                            <path
-                                d="M0,75 C200,150 400,0 600,75 C800,150 1000,0 1200,75"
-                                stroke="currentColor"
-                                strokeOpacity="0.1"
-                                strokeWidth="2"
-                                fill="none"
-                                className="text-foreground"
-                            />
-
-                            {/* Animated Glowing Line */}
-                            <motion.path
-                                d="M0,75 C200,150 400,0 600,75 C800,150 1000,0 1200,75"
-                                stroke="url(#waveGradient)"
-                                strokeWidth="3"
-                                filter="url(#glow-wave)"
-                                fill="none"
-                                initial={{ pathLength: 0, opacity: 0 }}
-                                animate={{
-                                    pathLength: 1,
-                                    opacity: [0, 1, 0],
-                                    pathOffset: [0, 1]
-                                }}
-                                transition={{
-                                    duration: 3,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                    repeatDelay: 0.5
-                                }}
-                            />
-                        </svg>
-
-                        {/* Avatars */}
-                        {testimonials.map((testi, index) => {
-                            const isActive = index === activeIndex;
-                            return (
-                                <button
-                                    key={testi.id}
-                                    onClick={() => setActiveIndex(index)}
-                                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ease-out group ${isActive ? "z-20 scale-125" : "z-10 scale-90 opacity-70 hover:opacity-100 hover:scale-100"
-                                        }`}
-                                    style={{ left: testi.position.left, top: testi.position.top }}
-                                >
-                                    <div
-                                        className={`w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br ${testi.imageColor} flex items-center justify-center text-white font-bold text-xl md:text-2xl shadow-lg border-4 transition-colors ${isActive ? "border-primary" : "border-white/10"
-                                            }`}
-                                    >
-                                        {testi.initials}
-                                    </div>
-                                    {/* Optional Ring for active */}
-                                    {isActive && (
-                                        <div className="absolute inset-0 -m-3 border border-primary/30 rounded-full animate-pulse" />
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Mobile Grid Fallback */}
-                    <div className="md:hidden grid grid-cols-3 gap-4 mb-8 w-full px-4">
-                        {testimonials.map((testi, index) => {
-                            const isActive = index === activeIndex;
-                            return (
-                                <button
-                                    key={testi.id}
-                                    onClick={() => setActiveIndex(index)}
-                                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${isActive ? "bg-white/10" : ""}`}
-                                >
-                                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${testi.imageColor} flex items-center justify-center text-white font-bold shadow-sm mb-2 opacity-90`}>
-                                        {testi.initials}
-                                    </div>
-                                </button>
-                            )
-                        })}
-                    </div>
-
-                    {/* Bottom Quote & Controls */}
-                    <div className="max-w-3xl mx-auto px-4 text-center mt-4 min-h-[140px] flex flex-col justify-between gap-6">
-                        <div className="min-h-[90px] flex items-center justify-center">
-                            <p className="text-lg md:text-xl text-foreground leading-relaxed italic transition-all duration-300 transform">
-                                &quot;{activeTestimonial.quote}&quot;
-                            </p>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-6 mt-4">
-                            <button
-                                onClick={prevTestimonial}
-                                className="p-3 rounded-full border border-white/10 hover:bg-white/10 transition-colors group bg-white/5"
-                                aria-label="Previous testimonial"
+                {/* Carousel Viewport with Peeking Next Card like in Main Site */}
+                <div className="testimonials-carousel-viewport">
+                    <div
+                        className="testimonials-carousel-track"
+                        style={{
+                            transform: `translateX(calc(-${currentIndex} * (var(--tm-card-w, 1200px) + var(--tm-card-gap, 24px))))`,
+                            transition: "transform 0.48s cubic-bezier(0.25, 1, 0.5, 1)",
+                        }}
+                    >
+                        {testimonialsData.map((item, idx) => (
+                            <div
+                                key={item.id}
+                                className={`testimonial-card ${idx === currentIndex ? "active" : ""}`}
                             >
-                                <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
-                            </button>
-
-                            <div className="flex flex-col">
-                                <div className="text-base font-bold text-foreground">
-                                    {activeTestimonial.name}
+                                {/* Large B&W Client Image covering full height & ~40% width, dispersing to the right */}
+                                <div className="testimonial-bg-image-wrapper">
+                                    <img
+                                        src={item.avatar}
+                                        alt={item.authorName}
+                                        className="testimonial-card-bg-photo"
+                                    />
+                                    <div className="testimonial-photo-dispersion-overlay"></div>
                                 </div>
-                                <div className="text-xs text-muted-foreground font-medium">
-                                    {activeTestimonial.role}
+
+                                {/* Card Content layer sitting above the image */}
+                                <div className="testimonial-card-content-layer">
+                                    {/* Top Row: Company Logo on Right Side */}
+                                    <div className="testimonial-card-top-header">
+                                        <div className="testimonial-card-logo-container">
+                                            <img
+                                                src={item.logoSrc}
+                                                alt={item.company}
+                                                className="testimonial-client-logo-img"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Middle: Client Message */}
+                                    <p className="testimonial-quote">
+                                        {item.quote}
+                                    </p>
+
+                                    {/* Bottom: Services boxes we did for client + Name & Designation */}
+                                    <div className="testimonial-card-bottom-info">
+                                        <div className="testimonial-services-tags">
+                                            {item.services.map((service, sIdx) => (
+                                                <span key={sIdx} className="testimonial-service-pill">
+                                                    {service}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        <div className="testimonial-author-wrapper">
+                                            <h5 className="author-name">{item.authorName}</h5>
+                                            <p className="author-title">{item.authorTitle}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <button
-                                onClick={nextTestimonial}
-                                className="p-3 rounded-full border border-white/10 hover:bg-white/10 transition-colors group bg-white/5"
-                                aria-label="Next testimonial"
-                            >
-                                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
-                            </button>
-                        </div>
+                        ))}
                     </div>
-                </motion.div>
+                </div>
+
+                {/* Carousel Navigation Buttons like in Main Site (No numbers) */}
+                <div className="testimonials-nav-buttons">
+                    <button
+                        type="button"
+                        onClick={handlePrev}
+                        className="testimonials-nav-btn prev-btn"
+                        aria-label="Previous testimonial"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleNext}
+                        className="testimonials-nav-btn next-btn"
+                        aria-label="Next testimonial"
+                    >
+                        <ArrowRight size={18} />
+                    </button>
+                </div>
             </div>
         </section>
     );

@@ -2,18 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ThemeToggle } from "./theme-toggle";
-// Button import removed
-// Actually, I should create a reusable button component since I'll use it in Hero too.
-
-function NavButton({ children, variant = "primary", className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" }) {
-    const base = "px-4 py-2 rounded-lg font-medium transition-all duration-200";
-    const variants = {
-        primary: "bg-primary text-primary-foreground hover:shadow-[0_0_20px_-5px_var(--primary)]",
-        ghost: "hover:bg-secondary/50 text-foreground"
-    };
-    return <button className={`${base} ${variants[variant]} ${className || ""}`} {...props}>{children}</button>;
-}
 
 interface NavbarProps {
     onOpenModal: () => void;
@@ -34,37 +22,56 @@ export function Navbar({ onOpenModal }: NavbarProps) {
     };
 
     return (
-        <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-4xl z-50">
-            <div className="bg-background/60 backdrop-blur-2xl rounded-full px-6 py-3 flex items-center justify-between border border-white/5 shadow-2xl shadow-black/50">
-                <div className="flex-shrink-0 flex items-center gap-2">
-                    <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                            <div className="w-4 h-4 rounded-full bg-background" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-xl tracking-tight text-foreground leading-none">Heapsync</span>
-                            <span className="text-[10px] text-muted-foreground font-medium tracking-wide">Powered by Heapvue</span>
-                        </div>
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+            <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                {/* Brand Text Only */}
+                <div className="flex-shrink-0 flex items-center">
+                    <Link href="/" className="flex flex-col hover:opacity-90 transition-opacity">
+                        <span className="font-bold text-xl tracking-tight text-[#0a0f29] leading-none">
+                            Heapsync
+                        </span>
+                        <span className="text-[10px] text-[#64748b] font-medium tracking-wide mt-1">
+                            Powered by Heapvue
+                        </span>
                     </Link>
                 </div>
 
-                <div className="hidden md:flex items-center gap-8">
-                    <a href="#features" onClick={(e) => handleScroll(e, "features")} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">Features</a>
-                    <a href="#pricing" onClick={(e) => handleScroll(e, "pricing")} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">Pricing</a>
-                    <a href="https://heapvue.com/about" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">About</a>
-                </div>
+                {/* Nav Links */}
+                <nav className="hidden md:flex items-center gap-8">
+                    <a
+                        href="#features"
+                        onClick={(e) => handleScroll(e, "features")}
+                        className="text-[0.92rem] font-medium text-[#1e293b] hover:text-[#0555FF] transition-colors cursor-pointer"
+                    >
+                        Features
+                    </a>
+                    <a
+                        href="#pricing"
+                        onClick={(e) => handleScroll(e, "pricing")}
+                        className="text-[0.92rem] font-medium text-[#1e293b] hover:text-[#0555FF] transition-colors cursor-pointer"
+                    >
+                        Pricing
+                    </a>
+                    <a
+                        href="https://heapvue.com/about"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[0.92rem] font-medium text-[#1e293b] hover:text-[#0555FF] transition-colors cursor-pointer"
+                    >
+                        About
+                    </a>
+                </nav>
 
+                {/* Right Action */}
                 <div className="flex items-center gap-4">
-
                     <button
                         onClick={onOpenModal}
-                        className="relative group bg-primary text-primary-foreground px-6 py-2 rounded-full font-bold text-sm overflow-hidden transition-all hover:scale-105 shadow-[0_0_20px_-5px_var(--primary)] hover:shadow-[0_0_30px_-5px_var(--primary)]"
+                        className="btn-heapvue-primary rounded-none text-sm px-6 py-2.5"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:animate-[shimmer_1.5s_infinite]" />
-                        <span className="relative z-10">Get in Touch</span>
+                        Get in Touch
                     </button>
                 </div>
             </div>
-        </nav>
+        </header>
     );
 }
