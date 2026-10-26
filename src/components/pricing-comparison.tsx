@@ -163,7 +163,7 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                         {/* Column 2 Header: Traditional SaaS Competitors */}
                         <div className="col-span-4 p-6 lg:p-8 text-center flex flex-col items-center justify-between h-full border-l border-[#e2e8f0] bg-[#fafbfc]">
                             <div className="w-full">
-                                <span className="text-xs font-semibold text-[#dc2626] block mb-1">
+                                <span className="text-xs font-semibold text-[#081d63] block mb-1">
                                     Perpetual rental model
                                 </span>
                                 <h3 className="text-xl lg:text-2xl font-bold text-[#475569] mb-1">
@@ -176,12 +176,12 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                                     <div className="text-3xl lg:text-4xl font-bold text-[#64748b] font-mono tracking-tight flex items-baseline justify-center gap-1">
                                         ₹2L<span className="text-xs font-sans font-medium text-[#94a3b8]">/yr average</span>
                                     </div>
-                                    <span className="text-xs text-[#dc2626] font-medium block mt-1">
+                                    <span className="text-xs text-[#081d63] font-medium block mt-1">
                                         Compounding 5-Yr Cost: ₹10,00,000+
                                     </span>
                                 </div>
                             </div>
-                            <div className="w-full max-w-[200px] py-2 px-4 bg-[#fef2f2] text-[#dc2626] border border-[#fee2e2] text-xs font-semibold text-center">
+                            <div className="w-full max-w-[200px] py-2 px-4 bg-[#eff6ff] text-[#081d63] border border-[#CEE1FF] text-xs font-semibold text-center">
                                 Zero asset ownership
                             </div>
                         </div>
@@ -253,9 +253,9 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                                     </button>
                                 </div>
 
-                                {/* Column 2: Traditional SaaS Disadvantage (Red X) */}
+                                {/* Column 2: Traditional SaaS Disadvantage (Theme Blue Dark X) */}
                                 <div className="col-span-4 p-5 lg:p-6 border-l border-[#e2e8f0] bg-[#fafbfc] flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#dc2626] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                                    <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                                         <X className="w-3 h-3 stroke-[3] text-white" />
                                     </div>
                                     <div className="flex-1">
@@ -281,9 +281,9 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                                     </div>
                                 </div>
 
-                                {/* Column 3: Heapsync Advantage (Blue Checkmark & Theme-Matched Tinted Column) */}
+                                {/* Column 3: Heapsync Advantage (Theme Blue Checkmark & Theme-Matched Tinted Column) */}
                                 <div className="col-span-4 p-5 lg:p-6 bg-[#f8fbff] border-l border-[#e2e8f0] flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#16a34a] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                                    <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                                         <Check className="w-3 h-3 stroke-[3] text-white" />
                                     </div>
                                     <div className="flex-1">
@@ -358,7 +358,7 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                         {/* Competitor SaaS Card */}
                         <div className="border border-[#e2e8f0] bg-[#fafbfc] rounded-none p-5 flex flex-col justify-between">
                             <div>
-                                <span className="text-xs font-semibold text-[#dc2626] block mb-1">
+                                <span className="text-xs font-semibold text-[#081d63] block mb-1">
                                     Perpetual rental model
                                 </span>
                                 <h3 className="text-xl sm:text-2xl font-bold text-[#475569] mb-1">
@@ -371,12 +371,12 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                                     <div className="text-3xl font-bold text-[#64748b] font-mono">
                                         ₹2L <span className="text-xs font-sans font-medium text-[#94a3b8]">/yr average</span>
                                     </div>
-                                    <span className="text-xs text-[#dc2626] font-medium block mt-1">
+                                    <span className="text-xs text-[#081d63] font-medium block mt-1">
                                         Compounding 5-Yr Cost: ₹10,00,000+
                                     </span>
                                 </div>
                             </div>
-                            <div className="py-2 px-3 bg-[#fef2f2] text-[#dc2626] border border-[#fee2e2] text-xs font-semibold text-center">
+                            <div className="py-2 px-3 bg-[#eff6ff] text-[#081d63] border border-[#CEE1FF] text-xs font-semibold text-center">
                                 Zero asset ownership
                             </div>
                         </div>
@@ -429,7 +429,7 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
                                     <div className="space-y-2.5">
                                         {/* Heapsync Enterprise Block */}
                                         <div className="p-3 bg-[#f8fbff] border border-[#CEE1FF]/70 rounded-none flex items-start gap-2.5">
-                                            <div className="w-5 h-5 rounded-full bg-[#16a34a] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                                            <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                                                 <Check className="w-3 h-3 stroke-[3] text-white" />
                                             </div>
                                             <div className="flex-1">
@@ -460,11 +460,11 @@ export function PricingComparison({ onOpenModal }: PricingComparisonProps) {
 
                                         {/* Traditional SaaS Block */}
                                         <div className="p-3 bg-[#fafbfc] border border-[#e2e8f0] rounded-none flex items-start gap-2.5">
-                                            <div className="w-5 h-5 rounded-full bg-[#dc2626] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                                            <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                                                 <X className="w-3 h-3 stroke-[3] text-white" />
                                             </div>
                                             <div className="flex-1">
-                                                <span className="text-[11px] font-bold text-[#dc2626] block mb-0.5">
+                                                <span className="text-[11px] font-bold text-[#081d63] block mb-0.5">
                                                     Traditional SaaS
                                                 </span>
                                                 <p className="text-xs text-[#475569] font-medium leading-snug">
