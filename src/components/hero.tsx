@@ -1,328 +1,442 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Zap, Shield, Server } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle2, ShieldCheck, Zap, Database } from "lucide-react";
 import type { DemoSource } from "@/lib/meta-events";
+import { trackMetaEvent } from "@/lib/meta-events";
+import { captureUtmParams } from "@/lib/utm";
 
 interface HeroProps {
-    onOpenModal: (source: DemoSource) => void;
+    onOpenModal?: (source: DemoSource) => void;
 }
 
 export function Hero({ onOpenModal }: HeroProps) {
+    const [formData, setFormData] = useState({
+        fullName: "",
+        email: "",
+        countryCode: "+91",
+        phone: "",
+        companyName: "",
+        message: "",
+        agree: true,
+    });
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const hasStarted = useRef(false);
+    const submitting = useRef(false);
+
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        if (type === "checkbox") {
+            const { checked } = e.target as HTMLInputElement;
+            setFormData((prev) => ({ ...prev, [name]: checked }));
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
+
+        if (!hasStarted.current && value.trim()) {
+            hasStarted.current = true;
+            trackMetaEvent("DemoFormStarted", { cta_source: "hero_get_started", form_id: "heapsync_demo" });
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (submitting.current) return;
+        setErrorMessage(null);
+
+        if (!formData.agree) {
+            setErrorMessage("Please agree to the privacy statement before submitting.");
+            return;
+        }
+
+        submitting.current = true;
+        setIsSubmitting(true);
+        trackMetaEvent("DemoFormSubmitAttempt", {
+            cta_source: "hero_get_started",
+            form_id: "heapsync_demo",
+            submission_status: "attempted",
+        });
+
+        const utms = captureUtmParams();
+        const cleanPhone = formData.phone.trim().replace(/^\+/, "");
+        const fullPhone = `${formData.countryCode} ${cleanPhone}`.trim();
+
+        const payload = {
+            full_name: formData.fullName.trim(),
+            email: formData.email.trim(),
+            phone: fullPhone,
+            company: formData.companyName.trim(),
+            company_name: formData.companyName.trim(),
+            service: "Heapsync Self-Hosted CRM",
+            service_type: "Heapsync Self-Hosted CRM",
+            description: formData.message.trim(),
+            message: formData.message.trim(),
+            agree: formData.agree,
+            agreePrivacy: formData.agree,
+            utm_source: utms.utm_source || "",
+            utm_medium: utms.utm_medium || "",
+            utm_campaign: utms.utm_campaign || "",
+            utm_term: utms.utm_term || "",
+            utm_content: utms.utm_content || "",
+            utm_id: utms.utm_id || "",
+            utm_placement: utms.utm_placement || "",
+            utm_device: utms.utm_device || "",
+            utm_network: utms.utm_network || "",
+        };
+
+        // network_error until the CMS answers; after that a failure means it did not accept the enquiry.
+        let failure: "network_error" | "rejected" = "network_error";
+
+        try {
+            const response = await fetch("https://cms.heapvue.cloud/api/v1/enquiries", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            failure = "rejected";
+            const data = await response.json();
+
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || "Failed to submit enquiry. Please try again.");
+            }
+
+            // Lead fires only here: the CMS has confirmed the enquiry.
+            trackMetaEvent("Lead", {
+                cta_source: "hero_get_started",
+                form_id: "heapsync_demo",
+                submission_status: "confirmed",
+            });
+
+            setIsSubmitted(true);
+        } catch (error: unknown) {
+            trackMetaEvent("DemoFormSubmitError", {
+                cta_source: "hero_get_started",
+                form_id: "heapsync_demo",
+                submission_status: failure,
+            });
+            console.error("Enquiry submission failed", error);
+            const msg = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+            setErrorMessage(msg);
+        } finally {
+            submitting.current = false;
+            setIsSubmitting(false);
+        }
+    };
 
     return (
-        <section className="relative min-h-screen flex flex-col items-center justify-start pt-32 overflow-hidden selection:bg-primary selection:text-primary-foreground">
-            {/* dynamic premium background */}
-            {/* dynamic premium background */}
-            <div className="absolute inset-0 h-full w-full pointer-events-none">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.5)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.5)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:60px_60px]" />
-                <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/20 opacity-20 blur-[100px]" />
-            </div>
+        <section className="relative pt-32 pb-20 md:py-36 overflow-hidden bg-white selection:bg-[#0555FF]/15 selection:text-[#081d63]">
+            {/* Soft Ambient Light Gradient (No Grids) */}
+            <div className="absolute left-1/4 top-10 -z-10 h-[500px] w-[650px] rounded-full bg-gradient-to-b from-[#E9F5FF]/60 to-transparent blur-[110px] pointer-events-none" />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center flex flex-col items-center">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative"
-                >
-                    <div className="relative inline-flex overflow-hidden rounded-full p-[1px] mb-8">
-                        <span className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,var(--primary)_50%,transparent_100%)]" />
-                        <span className="inline-flex h-full w-full cursor-default items-center gap-2 rounded-full bg-secondary/90 px-4 py-2 text-xs font-medium text-foreground/80 backdrop-blur-3xl tracking-wide">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+                    
+                    {/* Left Column: Larger Headline, Substantial Content & Balanced Height */}
+                    <div className="lg:col-span-7 flex flex-col items-start text-left justify-center">
+                        {/* Main Headline: Bold, Larger Sizing, Max 2 Lines */}
+                        <motion.h1
+                            className="text-[22px] xs:text-[26px] sm:text-4xl md:text-5xl lg:text-[52px] xl:text-[56px] font-bold tracking-tight mb-5 sm:mb-6 leading-[1.2] sm:leading-[1.14] text-[#0a0f29]"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                        >
+                            The CRM built to eliminate <br />
+                            <span className="text-[#0555FF] relative inline-block">
+                                monthly &amp; per-user fees.
                             </span>
-                            <span>
-                                Now available for <span className="text-primary font-bold">self-hosting</span>
-                            </span>
-                        </span>
-                    </div>
-                </motion.div>
+                        </motion.h1>
 
-                <motion.h1
-                    className="text-5xl md:text-8xl font-bold tracking-tight mb-8 leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/50"
-                    initial={{ opacity: 0, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, filter: "blur(0px)" }}
-                    transition={{ duration: 1, delay: 0.2 }}
-                >
-                    The CRM built for <br className="hidden md:block" />
-                    <span className="relative inline-block text-primary">
-                        microsecond speed.
+                        {/* Description: Proportional responsive text */}
+                        <motion.p
+                            className="text-sm sm:text-base lg:text-lg text-[#475569] max-w-xl mb-7 sm:mb-8 font-normal leading-relaxed"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.15 }}
+                        >
+                            Stop paying compounding subscriptions. Heapsync gives your business a perpetual self-hosted CRM with unlimited users, full data sovereignty, and zero recurring monthly invoices.
+                        </motion.p>
+
+                        {/* Key Pillars (Single line with button theme color circles) */}
                         <motion.div
-                            className="absolute -inset-1 bg-primary/20 blur-xl -z-10"
-                            animate={{ opacity: [0.5, 0.8, 0.5] }}
-                            transition={{ duration: 3, repeat: Infinity }}
-                        />
-                    </span>
-                </motion.h1>
-
-                <motion.p
-                    className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 font-light leading-relaxed"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                >
-                    Stop renting your data. Maintain complete sovereignty with a self-hosted CRM
-                    that runs on your infrastructure.
-                </motion.p>
-
-                <motion.div
-                    className="flex flex-col sm:flex-row items-center justify-center gap-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.6 }}
-                >
-                    <button
-                        onClick={() => onOpenModal("hero_get_started")}
-                        className="relative px-8 py-4 bg-foreground text-background font-bold rounded-full shadow-lg hover:shadow-primary/25 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 group text-lg overflow-hidden"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:animate-[shimmer_1.5s_infinite]" />
-                        Get Started
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    <button
-                        onClick={() => onOpenModal("hero_lifetime_access")}
-                        className="px-8 py-4 bg-secondary/50 backdrop-blur-sm text-foreground rounded-full hover:bg-secondary transition-all font-bold border border-foreground/10 flex items-center gap-2 hover:-translate-y-1 duration-200"
-                    >
-                        Get Lifetime Access
-                    </button>
-                </motion.div>
-
-                {/* Hub & Spoke Visualization */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 40 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.8 }}
-                    className="mt-24 relative w-full max-w-[95%] mx-auto opacity-100" // Increased max-width
-                >
-                    {/* Connecting Lines (SVG) */}
-                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 hidden md:block" viewBox="0 0 1400 600" preserveAspectRatio="none"> {/* Widened viewBox */}
-                        <defs>
-                            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="transparent" />
-                                <stop offset="50%" stopColor="var(--primary)" stopOpacity="1" /> {/* Max opacity */}
-                                <stop offset="100%" stopColor="transparent" />
-                            </linearGradient>
-                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                <feGaussianBlur stdDeviation="2" result="blur" />
-                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                            </filter>
-                        </defs>
-
-                        {/* Left Side Connectors - Moved X from 250 to 150 */}
-                        {/* Path 1: Top Left */}
-                        <path d="M 150 150 C 400 150 400 300 700 300" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-border opacity-30" fill="none" />
-                        <motion.path
-                            d="M 150 150 C 400 150 400 300 700 300"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"  // Increased width
-                            filter="url(#glow)" // Added glow filter
-                            fill="none"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: [0, 1, 0], pathOffset: [0, 1] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0 }}
-                        />
-
-                        {/* Path 2: Middle Left */}
-                        <path d="M 150 300 C 400 300 400 300 700 300" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-border opacity-30" fill="none" />
-                        <motion.path
-                            d="M 150 300 C 400 300 400 300 700 300"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"
-                            filter="url(#glow)"
-                            fill="none"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: [0, 1, 0], pathOffset: [0, 1] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.8 }}
-                        />
-
-                        {/* Path 3: Bottom Left */}
-                        <path d="M 150 450 C 400 450 400 300 700 300" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-border opacity-30" fill="none" />
-                        <motion.path
-                            d="M 150 450 C 400 450 400 300 700 300"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"
-                            filter="url(#glow)"
-                            fill="none"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: [0, 1, 0], pathOffset: [0, 1] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 1.6 }}
-                        />
-
-                        {/* Right Side Connectors - Moved X from 950 to 1250 */}
-                        {/* Path 4: Top Right */}
-                        <path d="M 1250 150 C 1000 150 1000 300 700 300" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-border opacity-30" fill="none" />
-                        <motion.path
-                            d="M 1250 150 C 1000 150 1000 300 700 300"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"
-                            filter="url(#glow)"
-                            fill="none"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: [0, 1, 0], pathOffset: [0, 1] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.4 }}
-                        />
-
-                        {/* Path 5: Middle Right */}
-                        <path d="M 1250 300 C 1000 300 1000 300 700 300" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-border opacity-30" fill="none" />
-                        <motion.path
-                            d="M 1250 300 C 1000 300 1000 300 700 300"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"
-                            filter="url(#glow)"
-                            fill="none"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: [0, 1, 0], pathOffset: [0, 1] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 1.2 }}
-                        />
-
-                        {/* Path 6: Bottom Right */}
-                        <path d="M 1250 450 C 1000 450 1000 300 700 300" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-border opacity-30" fill="none" />
-                        <motion.path
-                            d="M 1250 450 C 1000 450 1000 300 700 300"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"
-                            filter="url(#glow)"
-                            fill="none"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: [0, 1, 0], pathOffset: [0, 1] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 2.0 }}
-                        />
-                    </svg>
-
-                    <div className="relative z-10 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-24 items-center w-full"> {/* Increased Gap */}
-
-                        {/* Left Integrations */}
-                        <div className="hidden md:flex flex-col gap-20 items-center md:items-end">
-                            <div className="p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg flex items-center gap-4 w-60 hover:scale-105 transition-transform">
-                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 shrink-0">
-                                    <Server className="w-6 h-6" />
+                            className="flex flex-wrap items-center gap-4 sm:gap-6 w-full max-w-xl mb-7"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.25 }}
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <Zap className="w-3 h-3 text-white" />
                                 </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-bold text-foreground">Self-Hosted</div>
-                                    <div className="text-xs text-muted-foreground">Your Infrastructure</div>
+                                <span className="text-xs font-semibold text-[#0a0f29]">Microsecond latency</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <ShieldCheck className="w-3 h-3 text-white" />
+                                </div>
+                                <span className="text-xs font-semibold text-[#0a0f29]">100% data sovereignty</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-[#081d63] text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <Database className="w-3 h-3 text-white" />
+                                </div>
+                                <span className="text-xs font-semibold text-[#0a0f29]">Zero recurring invoices</span>
+                            </div>
+                        </motion.div>
+
+                        {/* Button to see Capability Comparison */}
+                        <motion.div
+                            className="mb-7"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const el = document.getElementById("pricing");
+                                    el?.scrollIntoView({ behavior: "smooth" });
+                                }}
+                                className="btn-heapvue-primary group cursor-pointer inline-flex items-center gap-2 text-xs font-semibold shadow-xs"
+                            >
+                                <span>See capability comparison</span>
+                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </motion.div>
+
+                        {/* Social Proof with Official Photos: Rajiv Ambat & Libin Joseph K */}
+                        <motion.div
+                            className="flex items-center gap-4 pt-2"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.35 }}
+                        >
+                            <div className="flex -space-x-2.5 overflow-hidden shrink-0">
+                                <img
+                                    className="inline-block h-11 w-11 sm:h-12 sm:w-12 aspect-square shrink-0 rounded-full ring-2 ring-white object-cover bg-[#E9F5FF]"
+                                    src="/images/clients/rajiv-ambat.png"
+                                    alt="Rajiv Ambat - Founder & CEO, SOLVEMyHealth"
+                                    title="Rajiv Ambat (SOLVEMyHealth)"
+                                />
+                                <img
+                                    className="inline-block h-11 w-11 sm:h-12 sm:w-12 aspect-square shrink-0 rounded-full ring-2 ring-white object-cover bg-[#E9F5FF]"
+                                    src="/images/clients/libin-joseph.jpg"
+                                    alt="Libin Joseph K - Director, Forsight Group"
+                                    title="Libin Joseph K (Forsight Group)"
+                                />
+                                <div className="inline-flex h-11 w-11 sm:h-12 sm:w-12 aspect-square shrink-0 items-center justify-center rounded-full bg-[#081d63] text-white text-xs font-bold ring-2 ring-white">
+                                    50+
                                 </div>
                             </div>
-                            <div className="p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg flex items-center gap-4 w-60 translate-x-8 hover:scale-105 transition-transform">
-                                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600 shrink-0">
-                                    <Shield className="w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-bold text-foreground">Encrypted</div>
-                                    <div className="text-xs text-muted-foreground">End-to-End Security</div>
-                                </div>
+                            <div>
+                                <span className="text-xs font-semibold text-[#0a0f29] block">
+                                    Trusted by forward-thinking leaders &amp; enterprises
+                                </span>
+                                <span className="text-[11px] text-[#64748b] block">
+                                    SOLVEMyHealth, Forsight Group, Conzaura &amp; more
+                                </span>
                             </div>
-                            <div className="p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg flex items-center gap-4 w-60 hover:scale-105 transition-transform">
-                                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center text-orange-600 shrink-0">
-                                    <Zap className="w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-bold text-foreground">Local-First</div>
-                                    <div className="text-xs text-muted-foreground">Zero Latency</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Central Hub Card */}
-                        <div className="w-full max-w-2xl mx-auto relative group">
-                            <div className="absolute inset-0 bg-primary/20 blur-[120px] opacity-20 rounded-full group-hover:opacity-30 transition-opacity" />
-                            <div className="relative bg-background/80 md:backdrop-blur-xl border border-white/20 dark:border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl dark:shadow-primary/5 ring-1 ring-black/5 dark:ring-white/10">
-                                {/* Mock Header */}
-                                <div className="flex items-center justify-between mb-8 border-b border-border pb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3.5 h-3.5 rounded-full bg-red-400" />
-                                        <div className="w-3.5 h-3.5 rounded-full bg-yellow-400" />
-                                        <div className="w-3.5 h-3.5 rounded-full bg-green-400" />
-                                    </div>
-                                    <div className="px-3 py-1 bg-secondary rounded-full text-xs text-foreground/70 font-mono flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                        heapsync-dashboard.local
-                                    </div>
-                                </div>
-
-                                {/* Mock Content */}
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="h-2.5 w-32 bg-muted rounded-full" />
-                                        <div className="h-7 px-3 bg-primary/10 text-primary text-[10px] font-bold rounded-full flex items-center justify-center tracking-widest">LIVE STREAM</div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="p-6 bg-muted/30 rounded-3xl border border-border">
-                                            <div className="text-2xl font-bold mb-2 text-foreground">99.9<span className="text-md text-muted-foreground ml-1">%</span></div>
-                                            <div className="text-sm text-muted-foreground font-medium">Sync Accuracy</div>
-                                        </div>
-                                        <div className="p-6 bg-muted/30 rounded-3xl border border-border">
-                                            <div className="text-2xl font-bold mb-2 text-foreground">0.4<span className="text-md text-muted-foreground ml-1">ms</span></div>
-                                            <div className="text-sm text-muted-foreground font-medium">Event Latency</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-5 bg-card rounded-2xl border border-border shadow-sm flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg shadow-primary/20">AI</div>
-                                        <div className="flex-1 space-y-3">
-                                            <div className="flex justify-between items-center">
-                                                <div className="h-2 w-24 bg-primary/20 rounded-full" />
-                                                <span className="text-[10px] text-muted-foreground">Processing</span>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                                <motion.div
-                                                    className="h-full bg-primary"
-                                                    initial={{ width: "0%" }}
-                                                    animate={{ width: "100%" }}
-                                                    transition={{ duration: 2, repeat: Infinity }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Bottom Floating Pill */}
-                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-foreground text-background text-sm font-bold px-6 py-3 rounded-full shadow-xl flex items-center gap-3 whitespace-nowrap z-20">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-                                    System Optimal
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Integrations */}
-                        <div className="hidden md:flex flex-col gap-20 items-center md:items-start">
-                            <div className="p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg flex items-center gap-4 w-60 hover:scale-105 transition-transform">
-                                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center text-purple-600 shrink-0">
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-bold text-foreground">Calendar</div>
-                                    <div className="text-xs text-muted-foreground">Real-time Sync</div>
-                                </div>
-                            </div>
-                            <div className="p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg flex items-center gap-4 w-60 -translate-x-8 hover:scale-105 transition-transform">
-                                <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center text-pink-600 shrink-0">
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-bold text-foreground">Team Flow</div>
-                                    <div className="text-xs text-muted-foreground">Collaboration</div>
-                                </div>
-                            </div>
-                            <div className="p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg flex items-center gap-4 w-60 hover:scale-105 transition-transform">
-                                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-bold text-foreground">Assets</div>
-                                    <div className="text-xs text-muted-foreground">Digital Library</div>
-                                </div>
-                            </div>
-                        </div>
-
+                        </motion.div>
                     </div>
-                </motion.div>
 
+                    {/* Right Column: Embedded 'Get In Touch' Form (Light Theme, No Corner Angles) */}
+                    <div className="lg:col-span-5 w-full">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                            className="bg-white border border-[#e2e8f0] p-6 sm:p-8 rounded-none relative overflow-hidden"
+                        >
+                            {/* Form Header */}
+                            <div className="mb-6">
+                                <span className="text-xs font-semibold text-[#0555FF] block mb-1">
+                                    Let&apos;s connect
+                                </span>
+                                <h3 className="text-2xl font-bold text-[#0a0f29] mb-1">
+                                    Get in touch
+                                </h3>
+                                <p className="text-xs text-[#64748b] leading-relaxed">
+                                    Send us a message, and we&apos;ll promptly discuss your private CRM deployment.
+                                </p>
+                            </div>
+
+                            {/* Success State */}
+                            {isSubmitted ? (
+                                <div className="py-10 text-center flex flex-col items-center justify-center space-y-4">
+                                    <div className="w-14 h-14 bg-[#E9F5FF] text-[#0555FF] rounded-none border border-[#CEE1FF] flex items-center justify-center">
+                                        <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
+                                    </div>
+                                    <h4 className="text-xl font-bold text-[#0a0f29]">Thank you!</h4>
+                                    <p className="text-xs text-[#64748b] max-w-xs leading-relaxed">
+                                        We&apos;ve received your request. An enterprise systems engineer will reach out within 2 hours.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsSubmitted(false);
+                                            setFormData({
+                                                fullName: "",
+                                                email: "",
+                                                countryCode: "+91",
+                                                phone: "",
+                                                companyName: "",
+                                                message: "",
+                                                agree: true,
+                                            });
+                                        }}
+                                        className="text-xs text-[#0555FF] hover:underline font-semibold pt-2 cursor-pointer"
+                                    >
+                                        Submit another inquiry
+                                    </button>
+                                </div>
+                            ) : (
+                                /* Active Form (Matching Popup Theme & Fields) */
+                                <form onSubmit={handleSubmit} className="space-y-4 text-left">
+                                    {errorMessage && (
+                                        <div className="p-3 bg-[#fef2f2] border border-[#fee2e2] text-[#dc2626] text-xs">
+                                            {errorMessage}
+                                        </div>
+                                    )}
+
+                                    {/* Full Name */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                                            Full name *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="fullName"
+                                            required
+                                            placeholder="Rahul Sharma"
+                                            value={formData.fullName}
+                                            onChange={handleFormChange}
+                                            className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-none px-3.5 py-2.5 text-[#0a0f29] outline-none focus:border-[#0555FF] focus:bg-white transition-all placeholder:text-[#94a3b8] text-xs"
+                                        />
+                                    </div>
+
+                                    {/* 2-Column: Email & Company */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                                                Work email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                required
+                                                placeholder="rahul@company.com"
+                                                value={formData.email}
+                                                onChange={handleFormChange}
+                                                className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-none px-3.5 py-2.5 text-[#0a0f29] outline-none focus:border-[#0555FF] focus:bg-white transition-all placeholder:text-[#94a3b8] text-xs"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                                                Company
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="companyName"
+                                                placeholder="Acme Pvt. Ltd."
+                                                value={formData.companyName}
+                                                onChange={handleFormChange}
+                                                className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-none px-3.5 py-2.5 text-[#0a0f29] outline-none focus:border-[#0555FF] focus:bg-white transition-all placeholder:text-[#94a3b8] text-xs"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Phone Number */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                                            Phone number *
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <select
+                                                name="countryCode"
+                                                value={formData.countryCode}
+                                                onChange={handleFormChange}
+                                                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-none px-2 py-2.5 text-[#0a0f29] outline-none focus:border-[#0555FF] focus:bg-white transition-all appearance-none min-w-[75px] text-xs cursor-pointer"
+                                            >
+                                                <option value="+91">🇮🇳 +91</option>
+                                                <option value="+1">🇺🇸 +1</option>
+                                                <option value="+44">🇬🇧 +44</option>
+                                                <option value="+971">🇦🇪 +971</option>
+                                                <option value="+65">🇸🇬 +65</option>
+                                                <option value="+61">🇦🇺 +61</option>
+                                            </select>
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                required
+                                                placeholder="98765 43210"
+                                                value={formData.phone}
+                                                onChange={handleFormChange}
+                                                className="flex-1 w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-none px-3.5 py-2.5 text-[#0a0f29] outline-none focus:border-[#0555FF] focus:bg-white transition-all placeholder:text-[#94a3b8] text-xs"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Message Textarea */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                                            Message / requirements
+                                        </label>
+                                        <textarea
+                                            name="message"
+                                            rows={3}
+                                            placeholder="Tell us about your team size, custom workflows, or deployment preference..."
+                                            value={formData.message}
+                                            onChange={handleFormChange}
+                                            className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-none px-3.5 py-2.5 text-[#0a0f29] outline-none focus:border-[#0555FF] focus:bg-white transition-all placeholder:text-[#94a3b8] text-xs resize-none"
+                                        />
+                                    </div>
+
+                                    {/* Privacy Agreement Checkbox matching popup */}
+                                    <div className="flex items-start gap-2.5 pt-1">
+                                        <input
+                                            type="checkbox"
+                                            id="hero-agree-checkbox"
+                                            name="agree"
+                                            checked={formData.agree}
+                                            onChange={handleFormChange}
+                                            className="mt-0.5 h-3.5 w-3.5 rounded-none border-[#cbd5e1] text-[#081d63] accent-[#081d63] focus:ring-[#081d63] cursor-pointer"
+                                        />
+                                        <label htmlFor="hero-agree-checkbox" className="text-[11px] text-[#64748b] leading-tight cursor-pointer">
+                                            I agree to allow Heapsync to contact me regarding this enquiry in accordance with the privacy policy.
+                                        </label>
+                                    </div>
+
+                                    {/* Submit Button matching popup */}
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="btn-heapvue-primary w-full py-3.5 text-xs rounded-none mt-2 disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer flex items-center justify-center gap-2"
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <span>Submitting...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>Submit Enquiry</span>
+                                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            )}
+                        </motion.div>
+                    </div>
+
+                </div>
             </div>
-        </section >
+        </section>
     );
 }
